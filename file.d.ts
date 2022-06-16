@@ -1,0 +1,5 @@
+declare module '*.png'
+declare module 'react-native-dialogbox'
+declare module 'react-native-modalbox'
+declare module 'react-native-restart'
+declare module 'react-native-vector-icons/*'

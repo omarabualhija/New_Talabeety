@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "832173911939",
+    "project_id": "talabaty-4268a",
+    "storage_bucket": "talabaty-4268a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:832173911939:android:5e3583d0bc1dffdd54d0b6",
+        "android_client_info": {
+          "package_name": "com.talabity"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "832173911939-qlc2vs1ui8ib2pce156273lk8v5sodhq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzsdUxRtDc7TrZFsO1iw01ck5pWbpaILI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "832173911939-qlc2vs1ui8ib2pce156273lk8v5sodhq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
