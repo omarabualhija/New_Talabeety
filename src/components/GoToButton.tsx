@@ -128,6 +128,7 @@ const GoToButton = (props: any) => {
             } else {
               return (
                 <ItemCard
+                  // navigation={props.navigation}
                   item={item}
                   {...props}
                   navigation={navigation}

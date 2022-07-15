@@ -61,7 +61,7 @@ const SearchButton = props => {
           }}>
           {Loading ? (
             <ActivityIndicator
-              size="large"
+              size="small"
               color={AppColors.primary}
               style={{marginTop: '50%'}}
             />
@@ -113,30 +113,45 @@ const SearchButton = props => {
     );
   };
 
-  const onRead = ({data}) => {
+  const onRead = async ({data}) => {
     Vibration.vibrate();
     setLoading(true);
-
-    ks.BarQRCode({
+    console.log(data);
+    let pram = {
       langID: Languages.langID,
-      ...data,
-    }).then(data => {
-      setLoading(false);
-      if (data && data.Success === 1) {
-        if (data.Product.ID) {
-          props.navigation.navigate('ItemDetailsScreen', {
-            item: data.Product,
-            store: '',
-            type: '1',
-          });
-        } else {
-          alert(Languages.NoEnoughInfo);
-        }
+    };
+    if (ShowQR) {
+      pram.QRCode = data;
+    } else {
+      pram.BarCode = data;
+    }
+
+    let _data = await ks.BarQRCode(pram);
+    setLoading(false);
+    console.log(_data);
+    if (_data && _data.Success === 1) {
+      console.log('data');
+      if (_data.Product.ID) {
+        props.navigation.navigate('SearchScreen', {
+          fromScanner: true,
+          name: _data.Product.ScientificName,
+        });
+        // props.navigation.navigate('ItemDetailsScreen', {
+        //   item: _data.Product,
+        //   store: '',
+        //   type: '1',
+        // });
       } else {
-        alert(Languages.NoItems);
+        alert(Languages.NoEnoughInfo);
       }
-      BqrQrPopup.current.close();
-    });
+    } else {
+      let message = _data.Message.indexOf('!!');
+
+      alert(
+        message == -1 ? Languages.NoItems : _data.Message.slice(18, message),
+      );
+    }
+    BqrQrPopup.current.close();
   };
 
   return (

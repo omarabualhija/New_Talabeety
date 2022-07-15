@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useLayoutEffect, useState} from 'react';
 import {
   StyleSheet,
   View,
@@ -19,23 +19,29 @@ const CategoryItemsScreen = (props: any) => {
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-
+  const [isFoucse, setIsfocus] = useState(false); //to update number of Cart Item <add by omar abu alhija>
+  const [isFirst, setIsFirst] = useState(false);
   const {store, type, category} = props.route.params;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    props.navigation.addListener('focus', () => {
+      setIsfocus(i => !i);
+    });
+  }, []);
 
+  useEffect(() => {
     if (props.route?.params?.query) {
       ks.DrugStoreProductsFilter({
         langID: Languages.langID,
         query: props.route?.params?.query,
         DrugStoreID: store?.ID,
-        IsRecentlyArrived:props.route?.params?.category?.id ===3?1:'',
-        IsNew:props.route?.params?.category?.id===4?1:'',
-        IsArrivedAfterDiscontinued:props.route?.params?.category?.id===2?1:'',
-        IsArrivedToday:props.route?.params?.category?.id===1?1:"",
+        IsRecentlyArrived: props.route?.params?.category?.id === 3 ? 1 : '',
+        IsNew: props.route?.params?.category?.id === 4 ? 1 : '',
+        IsArrivedAfterDiscontinued:
+          props.route?.params?.category?.id === 2 ? 1 : '',
+        IsArrivedToday: props.route?.params?.category?.id === 1 ? 1 : '',
       }).then((data: any) => {
         if (data?.Success === 1) {
-          
           setItems(data?.Products);
         }
         setLoading(false);
@@ -69,7 +75,7 @@ const CategoryItemsScreen = (props: any) => {
         <ActivityIndicator
           style={{flex: 1}}
           color={AppColors.primary}
-          size="large"
+          size="small"
         />
       </View>
     );
@@ -88,7 +94,6 @@ const CategoryItemsScreen = (props: any) => {
       />
 
       <FlatList
-        
         style={{width: '100%', flex: 1}}
         contentContainerStyle={{alignItems: 'center', paddingVertical: 10}}
         ListEmptyComponent={() => (
@@ -105,17 +110,21 @@ const CategoryItemsScreen = (props: any) => {
         data={items}
         keyExtractor={(item, index) => index.toString()}
         renderItem={({item, index}) => (
-          <ItemCard
-            animation={'fadeInRight'}
-            key={index}
-            delay={0}
-            duration={150 + index * 25}
-            item={item}
-            {...props}
-            showCartBtn
-            store={store}
-            type={type}
-          />
+          <>
+            <ItemCard
+              isFoucse={isFoucse}
+              navigation={props.navigation}
+              animation={'fadeInRight'}
+              key={index}
+              delay={0}
+              duration={150 + index * 25}
+              item={item}
+              {...props}
+              showCartBtn
+              store={store}
+              type={type}
+            />
+          </>
         )}
       />
     </View>

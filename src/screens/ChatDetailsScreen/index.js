@@ -142,7 +142,7 @@ const ChatDetailsScreen = props => {
           justifyContent: 'center',
           alignItems: 'center',
         }}>
-        <ActivityIndicator size="large" color={AppColors.primary} />
+        <ActivityIndicator size="small" color={AppColors.primary} />
       </View>
     );
 

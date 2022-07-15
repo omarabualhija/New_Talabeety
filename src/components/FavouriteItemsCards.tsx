@@ -134,19 +134,19 @@ const FavouriteItemsCards = (props: any) => {
                     color: AppColors.darkGrey,
                     textDecorationLine: 'line-through',
                   }}>
-                  {item.OldPrice + '$'}
+                  {item.OldPrice + ' ID '}
                 </Text>
               )}
             </View>
             <View style={{marginHorizontal: 10}}>
               <Text style={{...styles.body, color: AppColors.darkGreen}}>
-                {item.Price + '$'}
+                {item.Price + Languages.symbolPrice}
               </Text>
             </View>
           </View>
         ) : ShowPrice === true ? (
           <Text style={{...styles.body, color: AppColors.darkGreen}}>
-            {item.Price + '$'}
+            {item.Price + ' ID '}
           </Text>
         ) : (
           <View style={{justifyContent: 'center'}}>

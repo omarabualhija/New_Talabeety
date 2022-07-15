@@ -25,6 +25,7 @@ import {
   OrderDetails,
   SearchScreen,
   FavouriteScreen,
+  DetailsCartScreen,
 } from '../screens';
 import {AppColors, FontSizes, FontWeights} from '../theme';
 import {useSelector, useDispatch} from 'react-redux';
@@ -196,7 +197,8 @@ const BottomTabs = () => {
                     ? {color: AppColors.primary}
                     : {color: AppColors.black},
                 ]}>
-                {Languages.Cart} {cartUser.length}
+                {Languages.Cart}
+                {/* {cartUser.length} */}
               </Text>
             ),
             tabBarIcon: ({focused, color}) => {
@@ -364,6 +366,7 @@ const AppNavigator = () => (
       <MainAppStack.Screen name="LoginStack" component={LoginStackScreens} />
       <Stack.Screen name="ChatDetailsScreen" component={ChatDetailsScreen} />
       <Stack.Screen name="FavouriteScreen" component={FavouriteScreen} />
+      <Stack.Screen name="DetailsCartScreen" component={DetailsCartScreen} />
     </MainAppStack.Navigator>
   </NavigationContainer>
 );

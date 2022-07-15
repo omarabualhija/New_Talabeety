@@ -39,8 +39,8 @@ let chats = [
     image: require('../../assets/images/pharmacy2.jpeg'),
   },
 ];
-chats=chats.concat(chats);
-const totalChats = chats.concat(chats).concat(chats);
+chats = chats.concat(chats);
+const totalChats = 0;
 
 const ChatScreen = (props: any) => {
   const {user} = useSelector(({data}: any) => data);
@@ -51,31 +51,29 @@ const ChatScreen = (props: any) => {
   const [searchText, setSearchText] = useState('');
   const [ChatsList, setChatsList] = useState([]);
 
-  
   useEffect(() => {
-    dispatch(showNotifications(false))
+    dispatch(showNotifications(false));
     getChats();
     messaging().onMessage(() => getChats());
   }, []);
 
-
-  const getChats=()=>{
+  const getChats = () => {
     ks.GetAllChats({
       userID: user?.ID,
       langID: Languages.langID,
-    }).then((data:any)=>{//console.log(JSON.stringify(data))
-      if(data?.Success){
+    }).then((data: any) => {
+      //console.log(JSON.stringify(data))
+      if (data?.Success) {
         setChatsList(data.Chats);
-      }else{
+      } else {
         setChatsList([]);
       }
       setIsLoading(false);
-    })
+    });
   };
 
-
-  const newChatModal=()=>{
-    return(
+  const newChatModal = () => {
+    return (
       <Modal
         isOpen={isModalVisible}
         hasBackdrop={false}
@@ -83,7 +81,10 @@ const ChatScreen = (props: any) => {
         backButtonClose
         coverScreen
         useNativeDriver
-        onClosed={() => {setIsModalVisible(false); setSearchText('')}}
+        onClosed={() => {
+          setIsModalVisible(false);
+          setSearchText('');
+        }}
         style={{
           backgroundColor: AppColors.white,
           width: '100%',
@@ -137,81 +138,104 @@ const ChatScreen = (props: any) => {
             alignSelf: 'center',
             width: '100%',
           }}
-          renderItem={({item, index}) => <ChatCard {...props} item={item} key={'chats'+index}/>}
+          renderItem={({item, index}) => (
+            <ChatCard {...props} item={item} key={'chats' + index} />
+          )}
         />
       </Modal>
-    )
+    );
   };
 
-
-  
   return (
     <View style={styles.container}>
       <Header {...props} title={Languages.Chat} />
       {newChatModal()}
 
-      {IsLoading
-      ?<ActivityIndicator size='large' color={AppColors.primary} style={{marginTop:'60%'}}/>
-      :<>
-        {chats.length > 0 ? (
-          <View style={{width: '100%', flex:1}}>
-            <FlatList
-              data={ChatsList.filter((d:any)=>d?.DrugStoreName?true:false)}
-              keyExtractor={(item, index) => index.toString()}
-              ListHeaderComponent={() => <View style={{height: 10}} />}
-              ListFooterComponent={() => <View style={{height: 65}} />}
-              ListEmptyComponent={() => <Text style={{...FontWeights.Bold, alignSelf:'center', fontSize:24, marginTop:'60%', color:'gray'}}>{Languages.NoChat}</Text>}
-              renderItem={({item, index}) =>
-                <Animatable.View useNativeDriver key={index} delay={150+(150*index)} animation={'fadeInLeft'}>
-                  <ChatCard item={item} {...props} />
-                </Animatable.View>
-              }
-            />
+      {IsLoading ? (
+        <ActivityIndicator
+          size="small"
+          color={AppColors.primary}
+          style={{marginTop: '60%'}}
+        />
+      ) : (
+        <>
+          {chats.length > 0 ? (
+            <View style={{width: '100%', flex: 1}}>
+              <FlatList
+                data={ChatsList.filter((d: any) =>
+                  d?.DrugStoreName ? true : false,
+                )}
+                keyExtractor={(item, index) => index.toString()}
+                ListHeaderComponent={() => <View style={{height: 10}} />}
+                ListFooterComponent={() => <View style={{height: 65}} />}
+                ListEmptyComponent={() => (
+                  <Text
+                    style={{
+                      ...FontWeights.Bold,
+                      alignSelf: 'center',
+                      fontSize: 24,
+                      marginTop: '60%',
+                      color: 'gray',
+                    }}>
+                    {Languages.NoChat}
+                  </Text>
+                )}
+                renderItem={({item, index}) => (
+                  <Animatable.View
+                    useNativeDriver
+                    key={index}
+                    delay={150 + 150 * index}
+                    animation={'fadeInLeft'}>
+                    <ChatCard item={item} {...props} />
+                  </Animatable.View>
+                )}
+              />
 
-            {false&&<TouchableOpacity
-              activeOpacity={0.6}
+              {false && (
+                <TouchableOpacity
+                  activeOpacity={0.6}
+                  style={{
+                    backgroundColor: AppColors.primary,
+                    height: 50,
+                    width: 50,
+                    borderRadius: 25,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'absolute',
+                    bottom: 10,
+                    right: 10,
+                    zIndex: 99,
+                  }}
+                  onPress={() => {
+                    setIsModalVisible(!isModalVisible);
+                  }}>
+                  <AppIcon
+                    type={'MaterialCommunityIcons'}
+                    name={'plus'}
+                    size={30}
+                    color={AppColors.white}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+          ) : (
+            <View
               style={{
-                backgroundColor: AppColors.primary,
-                height: 50,
-                width: 50,
-                borderRadius: 25,
                 alignItems: 'center',
+                height: '100%',
                 justifyContent: 'center',
-                position:'absolute',
-                bottom:10,
-                right:10,
-                zIndex:99
-              }}
-              onPress={() => {
-                setIsModalVisible(!isModalVisible);
               }}>
               <AppIcon
-                type={'MaterialCommunityIcons'}
-                name={'plus'}
-                size={30}
-                color={AppColors.white}
+                type="MaterialCommunityIcons"
+                name={'chat'}
+                size={100}
+                color={AppColors.primary}
               />
-            </TouchableOpacity>}
-
-          </View>
-        ) : (
-          <View
-            style={{
-              alignItems: 'center',
-              height: '100%',
-              justifyContent: 'center',
-            }}>
-            <AppIcon
-              type="MaterialCommunityIcons"
-              name={'chat'}
-              size={100}
-              color={AppColors.primary}
-            />
-            <Text style={styles.heading}>{Languages.NoChat}</Text>
-          </View>
-        )}
-      </>}
-      
+              <Text style={styles.heading}>{Languages.NoChat}</Text>
+            </View>
+          )}
+        </>
+      )}
     </View>
   );
 };
@@ -221,7 +245,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     backgroundColor: 'white',
-    width:'100%'
+    width: '100%',
   },
   content: {
     flexDirection: 'row',

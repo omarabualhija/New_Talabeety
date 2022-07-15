@@ -1,5 +1,5 @@
 import Header from './Header';
-import StoreCard from './StoreCard';
+import StoreCard from './StoreCardBack';
 import ItemCard from './ItemCard';
 import AppButton from './AppButton';
 import GoToButton from './GoToButton';
@@ -26,5 +26,4 @@ export {
   QuantityButtons,
   CartItemCard,
   FavouriteItemsCards,
-  
 };

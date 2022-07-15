@@ -62,6 +62,7 @@ const HomeScreen = (props: any) => {
   const [myOrders, setMyOrders] = useState([]);
   const [quickAccessButtons, setQuickAccessButtons] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMyOrders, setLoadingMyOrders] = useState(true);
   const [loadingFavourites, setLoadingFavourites] = useState(true);
   const [FavouritesList, setFavouritesList] = useState([]);
   const [routes] = useState([
@@ -181,7 +182,7 @@ const HomeScreen = (props: any) => {
           </Text>
 
           {loadingFavourites ? (
-            <ActivityIndicator color={AppColors.primary} size="large" />
+            <ActivityIndicator color={AppColors.primary} size="small" />
           ) : (
             <FlatList
               data={FavouritesList}
@@ -226,17 +227,101 @@ const HomeScreen = (props: any) => {
     );
   };
 
-  const getUserFavourites = async () => {
+  const getUserFavourites = () => {
     setLoadingFavourites(true);
 
-    let data = await ks.GetUserFavourites({
+    ks.GetUserFavourites({
       UserID: user.ID,
       LangID: Languages.langID,
+    }).then(data => {
+      if (data?.Success) {
+        setFavouritesList(data.Products);
+      }
+      setLoadingFavourites(false);
     });
-    if (data?.Success) {
-      setFavouritesList(data.Products);
-    }
-    setLoadingFavourites(false);
+  };
+
+  const getinitData = () => {
+    setLoading(true);
+
+    ks.DrugStoreGet({
+      langID: Languages.langID,
+      AreaID: city.ID,
+      userID: user.ID,
+    }).then((data: any) => {
+      if (data.Success) {
+        let stores = data.DrugStores.filter(
+          (_store: any) => _store.IsDrugStore,
+        );
+        let medicalSupplies = data.DrugStores.filter(
+          (_store: any) => !_store.IsDrugStore,
+        );
+        setStores(stores.slice(0, 10));
+        setMedicalSupplies(medicalSupplies.slice(0, 10));
+      } else {
+        return Alert.alert('', Languages.SomethingWentWrong, [
+          {text: Languages.Yes},
+        ]);
+      }
+      if (user) {
+        ks.DrugStoreGet({
+          langID: Languages.langID,
+          userID: user.ID,
+        })
+          .then((data: any) => {
+            if (data.Success) {
+              let userStores = data.DrugStores.filter(
+                (_store: any) =>
+                  _store.IsDrugStore &&
+                  _store.IsAvailable === Constants.USER_STORE_STATUSES.ACCEPTED,
+              );
+              let userSupplies = data.DrugStores.filter(
+                (_store: any) =>
+                  !_store.IsDrugStore &&
+                  _store.IsAvailable === Constants.USER_STORE_STATUSES.ACCEPTED,
+              );
+              setUserStores(userStores);
+              setUserSupplies(userSupplies);
+              // setLoading(true);
+            } else {
+              return Alert.alert('', Languages.SomethingWentWrong, [
+                {text: Languages.Yes},
+              ]);
+            }
+          })
+          .finally(() => {
+            // setLoading(false);
+          });
+      } else {
+        // setLoading(false);
+      }
+
+      ks.AdsGet({isAdmin: true, langID: Languages.langID}).then((data: any) => {
+        if (data.Success) {
+          setBanners(data.Ads);
+        }
+        ks.GetUserFavourites({
+          UserID: user.ID,
+          LangID: Languages.langID,
+        }).then(data => {
+          if (data?.Success) {
+            setFavouritesList(data.Products);
+          }
+          ks.NotificationsGet({
+            userID: user.ID,
+          }).then((data: any) => {
+            if (data.Success) {
+              NotificationsCount = data.notifications.filter(
+                (d: any) => !d.IsRead,
+              ).length;
+              setNotificationsList(data.notifications);
+            }
+
+            setLoading(false);
+          });
+        });
+      });
+    });
   };
 
   useEffect(() => {
@@ -252,21 +337,10 @@ const HomeScreen = (props: any) => {
       ]);
     }
     setLoading(true);
-    // getDrugs(city);
-    // handleAccessButtons();
-    // getAds();
-    // getUserPoints();
-    // getUserFavourites();
-    // getNotifications();
-    // GetMyOrders();
-    // setupToken();
-    // getUserPoints();
-    // setTimeout(() => {
-    //   setLoading(false);
-    // }, 8000);
 
-    //add by omar abualhija
+    handleAccessButtons();
     getinitData();
+    setupToken();
     messaging().onMessage(async (remoteMessage: any) => {
       if (
         remoteMessage &&
@@ -277,189 +351,111 @@ const HomeScreen = (props: any) => {
     });
   }, []);
 
-  const getinitData = () => {
-    Promise.all([
-      getDrugs(city),
-      handleAccessButtons(),
-      getAds(),
-      getUserPoints(),
-      getUserFavourites(),
-      getNotifications(),
-      GetMyOrders(),
-      setupToken(),
-      getUserPoints(),
-    ]).then(() => {
-      setLoading(false);
-    });
-  };
-
-  const getAds = async () => {
-    let data = await ks.AdsGet({isAdmin: true, langID: Languages.langID});
-    if (data.Success) {
-      setBanners(data.Ads);
-    }
-  };
-
-  const getUserPoints = async () => {
-    console.log('before 2222 function');
-    var data = await ks.DrugStorePointGet({
-      userID: user.ID,
-      LangID: Languages.langID,
-    });
-
-    if (data?.Success) {
-      setUserPoints(data?.PointList);
-    }
-  };
-
-  const refreshData = () => {
-    setLoading(true);
-    getDrugs(city);
-    handleAccessButtons();
-
-    getAds();
-
-    getUserPoints();
-
-    getUserFavourites();
-    getNotifications();
-    GetMyOrders();
-    setupToken();
-    getUserPoints();
-    setTimeout(() => {
-      setLoading(false);
-    }, 8000);
-  };
-
-  // const getDrugs = (city: any) => {
-  //   // setLoading(true);
-  //   ks.DrugStoreGet({
-  //     langID: Languages.langID,
-  //     AreaID: city.ID,
-  //     userID: user.ID,
-  //   }).then((data: any) => {
+  // const getAds = () => {
+  //   ks.AdsGet({isAdmin: true, langID: Languages.langID}).then((data: any) => {
   //     if (data.Success) {
-  //       let stores = data.DrugStores.filter(
-  //         (_store: any) => _store.IsDrugStore,
-  //       );
-  //       let medicalSupplies = data.DrugStores.filter(
-  //         (_store: any) => !_store.IsDrugStore,
-  //       );
-  //       setStores(stores);
-  //       setMedicalSupplies(medicalSupplies);
-  //     } else {
-  //       return Alert.alert('', Languages.SomethingWentWrong, [
-  //         {text: Languages.Yes},
-  //       ]);
-  //     }
-  //     if (user) {
-  //       ks.DrugStoreGet({
-  //         langID: Languages.langID,
-  //         userID: user.ID,
-  //       })
-  //         .then((data: any) => {
-  //           if (data.Success) {
-  //             let userStores = data.DrugStores.filter(
-  //               (_store: any) =>
-  //                 _store.IsDrugStore &&
-  //                 _store.IsAvailable === Constants.USER_STORE_STATUSES.ACCEPTED,
-  //             );
-  //             let userSupplies = data.DrugStores.filter(
-  //               (_store: any) =>
-  //                 !_store.IsDrugStore &&
-  //                 _store.IsAvailable === Constants.USER_STORE_STATUSES.ACCEPTED,
-  //             );
-  //             setUserStores(userStores);
-  //             setUserSupplies(userSupplies);
-  //             // setLoading(true);
-  //           } else {
-  //             return Alert.alert('', Languages.SomethingWentWrong, [
-  //               {text: Languages.Yes},
-  //             ]);
-  //           }
-  //         })
-  //         .finally(() => {
-  //           // setLoading(false);
-  //         });
-  //     } else {
-  //       // setLoading(false);
+  //       setBanners(data.Ads);
   //     }
   //   });
   // };
-  const getDrugs = async (city: any) => {
+
+  const refreshData = () => {
+    handleAccessButtons();
+
+    getinitData();
+  };
+
+  const getDrugs = (city: any) => {
     // setLoading(true);
-    let data = await ks.DrugStoreGet({
+    ks.DrugStoreGet({
       langID: Languages.langID,
       AreaID: city.ID,
       userID: user.ID,
-    });
-
-    if (data.Success) {
-      let stores = data.DrugStores.filter((_store: any) => _store.IsDrugStore);
-      let medicalSupplies = data.DrugStores.filter(
-        (_store: any) => !_store.IsDrugStore,
-      );
-      setStores(stores);
-      setMedicalSupplies(medicalSupplies);
-    } else {
-      return Alert.alert('', Languages.SomethingWentWrong, [
-        {text: Languages.Yes},
-      ]);
-    }
-    if (user) {
-      ks.DrugStoreGet({
-        langID: Languages.langID,
-        userID: user.ID,
-      })
-        .then((data: any) => {
-          if (data.Success) {
-            let userStores = data.DrugStores.filter(
-              (_store: any) =>
-                _store.IsDrugStore &&
-                _store.IsAvailable === Constants.USER_STORE_STATUSES.ACCEPTED,
-            );
-            let userSupplies = data.DrugStores.filter(
-              (_store: any) =>
-                !_store.IsDrugStore &&
-                _store.IsAvailable === Constants.USER_STORE_STATUSES.ACCEPTED,
-            );
-            setUserStores(userStores);
-            setUserSupplies(userSupplies);
-            // setLoading(true);
-          } else {
-            return Alert.alert('', Languages.SomethingWentWrong, [
-              {text: Languages.Yes},
-            ]);
-          }
+    }).then((data: any) => {
+      if (data.Success) {
+        let stores = data.DrugStores.filter(
+          (_store: any) => _store.IsDrugStore,
+        );
+        let medicalSupplies = data.DrugStores.filter(
+          (_store: any) => !_store.IsDrugStore,
+        );
+        setStores(stores);
+        setMedicalSupplies(medicalSupplies);
+      } else {
+        return Alert.alert('', Languages.SomethingWentWrong, [
+          {text: Languages.Yes},
+        ]);
+      }
+      if (user) {
+        ks.DrugStoreGet({
+          langID: Languages.langID,
+          userID: user.ID,
         })
-        .finally(() => {
-          // setLoading(false);
-        });
-    } else {
-      // setLoading(false);
-    }
-  };
-  const setupToken = async () => {
-    let token = messaging().requestPermission();
-    messaging().getToken();
-
-    let data = await ks.SetUserToken({
-      userid: user?.ID,
-      token: token,
+          .then((data: any) => {
+            if (data.Success) {
+              let userStores = data.DrugStores.filter(
+                (_store: any) =>
+                  _store.IsDrugStore &&
+                  _store.IsAvailable === Constants.USER_STORE_STATUSES.ACCEPTED,
+              );
+              let userSupplies = data.DrugStores.filter(
+                (_store: any) =>
+                  !_store.IsDrugStore &&
+                  _store.IsAvailable === Constants.USER_STORE_STATUSES.ACCEPTED,
+              );
+              setUserStores(userStores);
+              setUserSupplies(userSupplies);
+              // setLoading(true);
+            } else {
+              return Alert.alert('', Languages.SomethingWentWrong, [
+                {text: Languages.Yes},
+              ]);
+            }
+          })
+          .finally(() => {
+            // setLoading(false);
+          });
+      } else {
+        // setLoading(false);
+      }
     });
   };
 
-  const getNotifications = async () => {
-    let data = await ks.NotificationsGet({
+  const setupToken = () => {
+    messaging().requestPermission();
+    messaging()
+      .getToken()
+      .then(token => {
+        ks.SetUserToken({
+          userid: user?.ID,
+          token: token,
+        }).then((data: any) => {});
+      });
+  };
+
+  const getUserPoints = () => {
+    ks.DrugStorePointGet({
       userID: user.ID,
+      LangID: Languages.langID,
+    }).then((data: any) => {
+      //console.log(JSON.stringify(data))
+      if (data?.Success) {
+        setUserPoints(data?.PointList);
+      }
     });
+  };
 
-    if (data.Success) {
-      NotificationsCount = data.notifications.filter(
-        (d: any) => !d.IsRead,
-      ).length;
-      setNotificationsList(data.notifications);
-    }
+  const getNotifications = () => {
+    ks.NotificationsGet({
+      userID: user.ID,
+    }).then((data: any) => {
+      if (data.Success) {
+        NotificationsCount = data.notifications.filter(
+          (d: any) => !d.IsRead,
+        ).length;
+        setNotificationsList(data.notifications);
+      }
+    });
   };
 
   const handleAccessButtons = () => {
@@ -634,7 +630,7 @@ const HomeScreen = (props: any) => {
   const HomeComponent = (props: any) =>
     loading ? (
       <ActivityIndicator
-        size={'large'}
+        size={'small'}
         color={AppColors.primary}
         style={{flex: 1}}
       />
@@ -710,7 +706,7 @@ const HomeScreen = (props: any) => {
                   isStore
                   {...props}
                   type={props.type}
-                  getDrugs={getDrugs}
+                  getDrugs={stores}
                 />
               </View>
               <FlatList
@@ -1059,14 +1055,25 @@ const HomeScreen = (props: any) => {
     second: MedicalSupplies,
   });
 
-  const GetMyOrders = async () => {
-    let data = await ks.MyOrders({
+  const GetMyOrders = () => {
+    setLoadingMyOrders(true);
+    ks.MyOrders({
       UserID: user.ID,
       LangID: Languages.langID,
+    }).then(data => {
+      if (data.Success) {
+        setLoadingMyOrders(false);
+
+        setMyOrders(data.orders);
+      } else {
+        Alert.alert('', 'Oops...Somthing Worng ', [
+          {
+            text: 'Back',
+            onPress: () => ordersPopup.current.close(),
+          },
+        ]);
+      }
     });
-    if (data.Success) {
-      setMyOrders(data.orders);
-    }
   };
 
   const ordersModal = () => {
@@ -1095,32 +1102,36 @@ const HomeScreen = (props: any) => {
             onClosePress={() => ordersPopup.current.close()}
           />
 
-          <FlatList
-            data={myOrders}
-            style={{width: '100%', flex: 1}}
-            contentContainerStyle={{paddingVertical: 5}}
-            keyExtractor={item => item.ID}
-            renderItem={({item, index}) => (
-              <TouchableOpacity
-                style={styles.ordersCards}
-                onPress={() => {
-                  ordersPopup.current.close();
-                  props.navigation.navigate('OrderDetails', {
-                    OrderID: item.OrderID,
-                  });
-                }}>
-                <Text style={{alignSelf: 'flex-start'}}>
-                  {moment(item.OrderDate).format('DD/MM/YYYY')}
-                </Text>
-                <Text style={{color: '#000'}}>{item.OwnerName}</Text>
-                <Text style={{color: '#000'}}>{item.MerchantName}</Text>
-                <Text style={{}}>{' # ' + item.OrderID}</Text>
-                <Text style={{fontSize: 16, color: '#000'}}>
-                  {item.FormattedOrderTotal} $
-                </Text>
-              </TouchableOpacity>
-            )}
-          />
+          {loadingMyOrders ? (
+            <ActivityIndicator color={AppColors.primary} size="small" />
+          ) : (
+            <FlatList
+              data={myOrders}
+              style={{width: '100%', flex: 1}}
+              contentContainerStyle={{paddingVertical: 5}}
+              keyExtractor={item => item.ID}
+              renderItem={({item, index}) => (
+                <TouchableOpacity
+                  style={styles.ordersCards}
+                  onPress={() => {
+                    ordersPopup.current.close();
+                    props.navigation.navigate('OrderDetails', {
+                      OrderID: item.OrderID,
+                    });
+                  }}>
+                  <Text style={{alignSelf: 'flex-start'}}>
+                    {moment(item.OrderDate).format('DD/MM/YYYY')}
+                  </Text>
+                  <Text style={{color: '#000'}}>{item.OwnerName}</Text>
+                  <Text style={{color: '#000'}}>{item.MerchantName}</Text>
+                  <Text style={{}}>{' # ' + item.OrderID}</Text>
+                  <Text style={{fontSize: 16, color: '#000'}}>
+                    {item.FormattedOrderTotal} ID
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+          )}
         </View>
       </Modal>
     );

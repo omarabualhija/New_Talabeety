@@ -1,3 +1,4 @@
+import {Alert} from 'react-native';
 import {
   LOGOUT,
   SAVE_USER,
@@ -11,17 +12,19 @@ import {
   SHOW_NOTIFICATION,
   ITEM_NOTE,
   CART_ITEM_CHECK,
+  GET_CART_USER,
 } from '../actions/types';
 
 const initialState = {
   user: null,
   isLoggedIn: false,
-
-  //cart:{}
-  cart: null,
+  //edit by omar
+  cart: [], //cartItem=[{prodID: '', qnt: 1}],
   city: null,
   cities: null,
   showNotification: false,
+  totalCart: 0,
+  cartUser: [],
 };
 
 let _cart = null;
@@ -35,6 +38,7 @@ const Reducer = (state = initialState, action) => {
         user: action.payload,
         isLoggedIn: true,
       };
+
     case ADD_TO_CART:
       _cart = state.cart
         ? {...state.cart}
@@ -47,66 +51,41 @@ const Reducer = (state = initialState, action) => {
         ...state,
         cart: _cart,
       };
+
     case ON_ITEM_PLUS:
-      _cart = {...state.cart};
-      for (let i = 0; i < _cart.items.length; i++) {
-        item = _cart.items[i];
-        if (item.ID === action.payload) {
-          if (item.quantity < item.MaxQuantity) {
-            // if quantity less than maximum quantity
-            _cart.totalPrice = _cart.totalPrice + item.Price;
-            _cart.itemsQty = _cart.itemsQty + 1;
-            item.quantity = item.quantity + 1;
-          }
-          break;
-        }
-      }
+      let isExisted = state.cart?.some((i, index) => {
+        return i.prod.ID == payload.ID;
+      });
 
       return {
         ...state,
-        cart: _cart,
+        cart: isExisted
+          ? state.cart.map(i =>
+              i.prod.ID == payload.ID ? {...i, qnt: i.qnt + 1} : i,
+            )
+          : [...state.cart, {prod: payload, qnt: 1}],
       };
+
     case ON_ITEM_MINUS:
-      _cart = {...state.cart};
-      for (let i = 0; i < _cart.items.length; i++) {
-        item = _cart.items[i];
-        if (item.ID === action.payload) {
-          if (item.quantity === 1) {
-            _cart.items.splice(i, 1);
-          } else {
-            item.quantity = item.quantity - 1;
-          }
-          break;
-        }
-      }
-      if (_cart.items.length === 0) {
-        _cart = null;
-      } else {
-        _cart.totalPrice -= item.Price;
-        _cart.itemsQty -= -1;
-      }
+      let _cart = state.cart
+        .map(i =>
+          i.prod.ID == payload.ID
+            ? i.qnt != 0
+              ? {...i, qnt: i.qnt - 1}
+              : {...i, qnt: 0}
+            : i,
+        )
+        .filter(i => i.qnt !== 0);
       return {
         ...state,
+
         cart: _cart,
       };
     case ON_ITEM_REMOVE:
-      _cart = {...state.cart};
-      for (let i = 0; i < _cart.items.length; i++) {
-        item = _cart.items[i];
-        if (item.ID === action.payload) {
-          _cart.items.splice(i, 1);
-          break;
-        }
-      }
-      if (_cart.items.length === 0) {
-        _cart = null;
-      } else {
-        _cart.totalPrice = _cart.totalPrice - item.Price * item.quantity;
-        _cart.itemsQty = _cart.itemsQty - item.quantity;
-      }
       return {
         ...state,
-        cart: _cart,
+
+        cart: state.cart.filter(i => i.prod.ID !== payload.ID),
       };
     case CART_ITEM_CHECK:
       _cart = {...state.cart};
@@ -163,6 +142,10 @@ const Reducer = (state = initialState, action) => {
         ...state,
         showNotification: action.payload,
       };
+
+    case GET_CART_USER: {
+      return {...state, cartUser: [...action.payload.productsCart]};
+    }
     default:
       return state;
   }

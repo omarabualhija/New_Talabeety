@@ -69,7 +69,6 @@ const LoginScreen = (props: props) => {
             {text: Languages.Yes},
           ]);
         }
-        console.log(JSON.stringify(data));
       })
       .finally(() => {
         setIsLoading(false);
@@ -78,7 +77,7 @@ const LoginScreen = (props: props) => {
 
   return isLoading ? (
     <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-      <ActivityIndicator size="large" color={AppColors.primary} />
+      <ActivityIndicator size="small" color={AppColors.primary} />
     </View>
   ) : (
     <KeyboardAvoidingView

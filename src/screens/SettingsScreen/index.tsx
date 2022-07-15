@@ -183,7 +183,7 @@ const SettingsScreen = (props: any) => {
             style={{
               fontSize: 16,
               paddingHorizontal: 19,
-              paddingBottom:15,
+              paddingBottom: 15,
               lineHeight: 20,
               letterSpacing: 0.6,
               color: '#000',
@@ -433,6 +433,31 @@ const SettingsScreen = (props: any) => {
               marginHorizontal: 5,
             }}>
             {contactWhatsappNumber1}
+          </Text>
+        </View>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginVertical: 2,
+          }}>
+          <AppIcon
+            type="Ionicons"
+            color={AppColors.black}
+            name="ios-call"
+            size={26}
+          />
+          <Text
+            onPress={() =>
+              Linking.openURL(`tel:${contactWhatsappNumber2}`).catch(() => {})
+            }
+            style={{
+              fontSize: 16,
+              color: AppColors.primary,
+              textDecorationLine: 'underline',
+              marginHorizontal: 5,
+            }}>
+            {contactWhatsappNumber2}
           </Text>
         </View>
 

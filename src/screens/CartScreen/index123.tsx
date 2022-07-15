@@ -43,10 +43,14 @@ const CartScreen = (props: any) => {
   const [data, setdata] = useState([]);
   React.useEffect(() => {
     // RNRestart.Restart();
-
+    const unsubscribe = props.navigation.addListener('focus', () => {
+      getCart();
+      getUserPoints();
+    });
     getUserPoints();
     getCart();
     //  calculateTotalDiscount();
+    return () => unsubscribe;
   }, [Loading]);
   const getCart = () => {
     ks.getCart({
@@ -606,7 +610,7 @@ const CartScreen = (props: any) => {
               <FlatList
                 data={data}
                 key={data.length}
-                initialScrollIndex={data.length - 1}
+                // initialScrollIndex={data.length - 1}
                 keyExtractor={(item, index) => index.toString()}
                 style={{width: '100%', alignSelf: 'center'}}
                 showsVerticalScrollIndicator
@@ -645,7 +649,7 @@ const CartScreen = (props: any) => {
                               '*',
                               (
                                 PriceTotalActive() - TotalPriceAfterSale
-                              ).toFixed(2) + ' $ ',
+                              ).toFixed(2) + Languages.symbolPrice,
                             )}
                           </Text>
                         </>
@@ -677,6 +681,8 @@ const CartScreen = (props: any) => {
                 renderItem={({item, index}) => {
                   return (
                     <CartItemCard
+                      getCart={() => getCart()}
+                      navigation={props.navigation}
                       key={index}
                       item={item}
                       DrugActive={DrugActive[0]}

@@ -170,7 +170,7 @@ const EditProfileScreen = (props: any) => {
 
   return loading ? (
     <ActivityIndicator
-      size="large"
+      size="small"
       color={AppColors.primary}
       style={{flex: 1}}
     />

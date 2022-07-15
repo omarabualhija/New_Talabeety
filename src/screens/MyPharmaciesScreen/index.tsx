@@ -1,4 +1,4 @@
-import React, {useEffect, useState,useRef} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {
   StyleSheet,
   Text,
@@ -26,13 +26,11 @@ const MyPharmaciesScreen = (props: any) => {
 
   const dispatch = useDispatch();
 
-
   useEffect(() => {
-    getMyPharmacies()
+    getMyPharmacies();
   }, []);
 
-
-  const getMyPharmacies=()=>{
+  const getMyPharmacies = () => {
     setLoading(true);
     ks.DrugStoreGet({
       langID: Languages.langID,
@@ -40,56 +38,60 @@ const MyPharmaciesScreen = (props: any) => {
       OwnerID: user.ID,
       UserID: user.ID,
     }).then((data: any) => {
-      if(data.Success){
+      if (data.Success) {
         setStoresList(data.DrugStores);
       }
       setLoading(false);
-    })
+    });
   };
-
 
   return (
     <View style={styles.container}>
       <Header {...props} title={Languages.MyPharmacies} showBackIcon />
 
-      {Loading
-      ?<ActivityIndicator size="large" color={AppColors.primary} style={{marginTop:'50%'}}/>
-      :<FlatList
-        data={storesList}
-      
-        keyExtractor={(item, index) => index.toString()}
-        ListEmptyComponent={() => (
-          <View style={{}}>
-            <Text style={styles.heading}>{Languages.NoItems}</Text>
-          </View>
-        )}
-        style={{
-          alignSelf: 'center',
-          width: '100%',
-          flex:1,
-        }}
-        contentContainerStyle={{
-          alignItems: 'center',
-          paddingVertical:10
-        }}
-        renderItem={({item, index}) => 
-          <StoreCard
-            key={index}
-            delay={150+(index*150)}
-            index={index}
-            IsMyPharmacies={true}
-            store={item}
-            isReload={getMyPharmacies}
-            isMy={false}
-            {...props}
-            type={props.type}
-            extraStyle={{marginTop:10}}
-            // showDelete
-            // afterDelete={()=>getMyPharmacies()}
-            // getDrugs={getDrugs}
-          />
-        }
-      />}
+      {Loading ? (
+        <ActivityIndicator
+          size="small"
+          color={AppColors.primary}
+          style={{marginTop: '50%'}}
+        />
+      ) : (
+        <FlatList
+          data={storesList}
+          keyExtractor={(item, index) => index.toString()}
+          ListEmptyComponent={() => (
+            <View style={{}}>
+              <Text style={styles.heading}>{Languages.NoItems}</Text>
+            </View>
+          )}
+          style={{
+            alignSelf: 'center',
+            width: '100%',
+            flex: 1,
+          }}
+          contentContainerStyle={{
+            alignItems: 'center',
+            paddingVertical: 10,
+          }}
+          renderItem={({item, index}) => (
+            <StoreCard
+              key={index}
+              delay={150 + index * 150}
+              index={index}
+              IsMyPharmacies={true}
+              store={item}
+              isReload={getMyPharmacies}
+              isMy={false}
+              {...props}
+              type={props.type}
+              extraStyle={{marginTop: 10}}
+              // showDelete
+              // afterDelete={()=>getMyPharmacies()}
+              // getDrugs={getDrugs}
+            />
+          )}
+        />
+      )}
     </View>
   );
 };
@@ -113,7 +115,7 @@ const styles = StyleSheet.create({
   heading: {
     ...FontWeights.Light,
     ...FontSizes.SubHeading,
-    marginTop:'50%'
+    marginTop: '50%',
   },
   body: {
     ...FontWeights.Light,

@@ -70,7 +70,7 @@ const App = () => {
           alignItems: 'center',
           backgroundColor: 'white',
         }}>
-        <ActivityIndicator size="large" color={AppColors.primary} />
+        <ActivityIndicator size="small" color={AppColors.primary} />
       </View>
     );
   };
@@ -78,7 +78,7 @@ const App = () => {
   if (IsLoading) {
     return (
       <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-        <ActivityIndicator size="large" color={AppColors.primary} />
+        <ActivityIndicator size="small" color={AppColors.primary} />
       </View>
     );
   }
@@ -90,9 +90,8 @@ const App = () => {
           translucent
           barStyle="light-content"
         />
-        
+
         <PersistGate persistor={persistor} loading={reduxLoading}>
-     
           <AppNavigator />
         </PersistGate>
       </View>

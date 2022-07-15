@@ -14,6 +14,7 @@ import {
   Alert,
   Dimensions,
   I18nManager,
+  Modal as ModalReactNative,
 } from 'react-native';
 import ks from '../../services/KSAPI';
 import Modal from 'react-native-modalbox';
@@ -72,11 +73,12 @@ const ProfileScreen = props => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState(false);
 
   const ref = useRef();
   const addPharmacyPopup = useRef();
   const addUserPopup = useRef();
-  const selectedLocation = useRef();
+  //const selectedLocation = useRef();
   const selectedCity = useRef();
   useEffect(() => {
     if (!user.TherePharmacy) {
@@ -508,8 +510,9 @@ const ProfileScreen = props => {
                       <Text
                         onPress={() => {
                           checkPermission();
-
-                          selectedLocation.current.open();
+                          setTimeout(function () {
+                            setSelectedLocation(true);
+                          }, 0);
                         }}
                         style={{
                           fontSize: 17,
@@ -808,11 +811,12 @@ const ProfileScreen = props => {
 
   const SelectLocation = () => {
     return (
-      <Modal
-        ref={selectedLocation}
-        backButtonClose
-        coverScreen={Platform.OS == 'android'}
-        swipeToClose={false}
+      <ModalReactNative
+        visible={selectedLocation}
+        // ref={selectedLocation}
+        // backButtonClose
+        // coverScreen={Platform.OS == 'android'}
+        // swipeToClose={false}
         style={{
           backgroundColor: 'transparent',
           flex: 1,
@@ -898,7 +902,7 @@ const ProfileScreen = props => {
             </Text>
           </TouchableOpacity>
         </View>
-      </Modal>
+      </ModalReactNative>
     );
   };
   const selectedCityUser = () => {

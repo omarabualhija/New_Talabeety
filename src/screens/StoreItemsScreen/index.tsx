@@ -197,7 +197,7 @@ const StoreItemsScreen = props => {
     getDrugs();
     getAds();
     getCategories();
-    getPoints();
+    // getPoints();
   }, []);
 
   const getDrugs = () => {
@@ -207,7 +207,7 @@ const StoreItemsScreen = props => {
       ID: store.ID,
       // AreaID: city.ID,
       userID: user.ID,
-    });
+    }).then(da => console.log(da));
   };
 
   const getAds = () => {
@@ -245,16 +245,26 @@ const StoreItemsScreen = props => {
       });
   };
 
-  const getPoints = () => {
-    ks.DrugStorePointGet({
-      UserID: user.ID,
-      DrugStoreID: store.ID,
-    }).then((data: any) => {
-      if (data?.Success) {
-        setPoints(data.Point);
-      }
-    });
-  };
+  // const getPoints = () => {
+  //   ks.DrugStorePointGet({
+  //     UserID: user.ID,
+  //     DrugStoreID: store.ID,
+  //   }).then((data: any) => {
+  //     console.log('datadatadata', data);
+  //     if (data?.Success) {
+  //       setPoints(data.Point);
+  //     }
+  //   });
+  // };
+
+  // const getPoints = () => {
+  //   ks.DrugStoreGet({
+  //     langID: Languages.langID,
+  //     ID: store.ID,
+  //     // AreaID: city.ID,
+  //     userID: user.ID,
+  //   }).then(da => setPoints(da.DrugStores[0].MinPointReplacement));
+  // };
 
   const getStoreDetails = () => {
     const arr = [
@@ -325,7 +335,7 @@ const StoreItemsScreen = props => {
       },
       {
         name: Languages.Minimumpoints,
-        value: Points,
+        value: store.MinPointReplacement,
         // iconName: 'star',
         // iconType: 'Entypo',
         image: require('../../assets/images/points.png'),
@@ -401,6 +411,7 @@ const StoreItemsScreen = props => {
               renderItem={({item, index}) => {
                 return (
                   <ItemCard
+                    navigation={props.navigation}
                     key={index}
                     item={item}
                     {...props}
@@ -473,6 +484,7 @@ const StoreItemsScreen = props => {
           renderItem={({item, index}) => {
             return (
               <ItemCard
+                navigation={props.navigation}
                 key={index}
                 item={item}
                 {...props}
@@ -824,7 +836,7 @@ const StoreItemsScreen = props => {
     <ActivityIndicator
       style={{flex: 1}}
       color={AppColors.primary}
-      size="large"
+      size="small"
     />
   ) : (
     <>
@@ -970,6 +982,7 @@ const StoreItemsScreen = props => {
         {/* {recentArrived.filter((i:any)=>i.IsRecentlyArrived?true:false).length>0?renderRecentlyArrived():null} */}
 
         {renderStaticCategories()}
+
         {renderDynamicCategories()}
 
         {false && (

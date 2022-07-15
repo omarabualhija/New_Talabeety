@@ -69,20 +69,191 @@ const HomeScreen = (props: any) => {
     {key: 'second', title: Languages.MedicalSupplies},
   ]);
 
+  const pointsModal = () => {
+    return (
+      <Modal
+        ref={pointsPopup}
+        swipeToClose={false}
+        onOpened={getUserPoints}
+        backButtonClose
+        useNativeDriver
+        coverScreen
+        style={styles.modals}>
+        <View
+          style={{
+            width: '100%',
+            flex: 1,
+            backgroundColor: '#fff',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingVertical: 10,
+          }}>
+          <Text
+            style={{
+              fontSize: 26,
+              color: AppColors.primary,
+              alignSelf: 'center',
+            }}>
+            {Languages.Points}
+          </Text>
+
+          <AppIcon
+            name="infocirlceo"
+            type="AntDesign"
+            color={'green'}
+            size={24}
+            style={{position: 'absolute', top: 0, left: 0, margin: 15}}
+            onPress={() =>
+              Alert.alert('', Languages.ReplacePointsMessage, [
+                {text: Languages.OK},
+              ])
+            }
+          />
+
+          <FlatList
+            data={userPoints}
+            style={{width: '100%', flex: 1, marginTop: 25}}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={({item, index}) => (
+              <View
+                style={{
+                  width: '100%',
+                  height: 50,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  paddingHorizontal: 10,
+                  alignSelf: 'center',
+                  borderTopWidth: 0,
+                  borderBottomWidth: 1,
+                  borderColor: '#bbb',
+                }}>
+                <Text style={{fontSize: 18, color: '#111'}}>
+                  {item.DrugStoreName}
+                </Text>
+                <Text style={{fontSize: 18, color: '#111'}}>{item.Point}</Text>
+              </View>
+            )}
+          />
+          <AppButton
+            onPress={() => pointsPopup.current.close()}
+            isLoading={false}
+            text={Languages.close}
+            extraStyle={{marginBottom: 0, width: '92%'}}
+          />
+          {/* extraStyle={{position:'absolute', bottom:0, alignSelf: 'center'}} */}
+        </View>
+      </Modal>
+    );
+  };
+
+  const favouritesModal = () => {
+    return (
+      <Modal
+        ref={favouritesPopup}
+        swipeToClose={false}
+        backButtonClose
+        onOpened={getUserFavourites}
+        onClosed={() => {
+          setFavouritesList([]);
+          setLoadingFavourites(true);
+        }}
+        useNativeDriver
+        coverScreen
+        style={styles.modals}>
+        <View
+          style={{
+            width: '100%',
+            flex: 1,
+            backgroundColor: '#fff',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingVertical: 10,
+          }}>
+          <Text
+            style={{
+              fontSize: 26,
+              color: AppColors.primary,
+              alignSelf: 'center',
+              marginBottom: 20,
+            }}>
+            {Languages.Favourites}
+          </Text>
+
+          {loadingFavourites ? (
+            <ActivityIndicator color={AppColors.primary} size="small" />
+          ) : (
+            <FlatList
+              data={FavouritesList}
+              style={{width: '100%', flex: 1}}
+              contentContainerStyle={{alignItems: 'center'}}
+              keyExtractor={item => item.ID}
+              ListEmptyComponent={() => (
+                <Text
+                  style={{
+                    alignSelf: 'center',
+                    fontSize: 20,
+                    textAlign: 'center',
+                    marginTop: Dimensions.get('screen').height * 0.3,
+                  }}>
+                  {Languages.NoFavListings}
+                </Text>
+              )}
+              renderItem={({item, index}) => (
+                <FavouriteItemsCards
+                  animation={'fadeInRight'}
+                  delay={150 + index * 150}
+                  item={item}
+                  {...props}
+                  showCartBtn={false}
+                  store={{ID: '', Name: '', DeliveryTime: ''}}
+                  type={Constants.STORE_TYPE}
+                  reloadList={getUserFavourites}
+                  closeModal={() => favouritesPopup.current.close()}
+                />
+              )}
+            />
+          )}
+
+          <AppButton
+            onPress={() => favouritesPopup.current.close()}
+            isLoading={false}
+            text={Languages.close}
+            extraStyle={{marginBottom: 0, width: '92%'}}
+          />
+        </View>
+      </Modal>
+    );
+  };
+
+  const getUserFavourites = async () => {
+    setLoadingFavourites(true);
+
+    let data = await ks.GetUserFavourites({
+      UserID: user.ID,
+      LangID: Languages.langID,
+    });
+    if (data?.Success) {
+      setFavouritesList(data.Products);
+    }
+    setLoadingFavourites(false);
+  };
+
   useEffect(() => {
     if (!user.TherePharmacy) {
       Alert.alert(Languages.Talabity, Languages.applicationCanOnly, [
         {
           text: 'OK',
           onPress: () => {
-            // setLoading(true);
+            setLoading(true);
             props.navigation.navigate('ProfileScreen');
           },
         },
       ]);
     }
-    handleAccessButtons();
     setLoading(true);
+
+    getinitData();
     messaging().onMessage(async (remoteMessage: any) => {
       if (
         remoteMessage &&
@@ -91,10 +262,33 @@ const HomeScreen = (props: any) => {
         getNotifications();
       }
     });
-    getinitData();
   }, []);
 
+  const getinitData = () => {
+    Promise.all([
+      getDrugs(city),
+      handleAccessButtons(),
+      getAds(),
+      getUserPoints(),
+      getUserFavourites(),
+      getNotifications(),
+      GetMyOrders(),
+      setupToken(),
+      getUserPoints(),
+    ]).then(() => {
+      setLoading(false);
+    });
+  };
+
+  const getAds = async () => {
+    let data = await ks.AdsGet({isAdmin: true, langID: Languages.langID});
+    if (data.Success) {
+      setBanners(data.Ads);
+    }
+  };
+
   const getUserPoints = async () => {
+    console.log('before 2222 function');
     var data = await ks.DrugStorePointGet({
       userID: user.ID,
       LangID: Languages.langID,
@@ -105,80 +299,65 @@ const HomeScreen = (props: any) => {
     }
   };
 
-  const getinitData = async () => {
-    /////////////////////////////////
-    // getDrugs(city),
-    let data1 = await ks.DrugStoreGet({
-      langID: Languages.langID,
-      AreaID: city.ID,
-      userID: user.ID,
-    });
-
-    if (data1.Success) {
-      let stores = data1.DrugStores.filter((_store: any) => _store.IsDrugStore);
-      let medicalSupplies = data1.DrugStores.filter(
-        (_store: any) => !_store.IsDrugStore,
-      );
-      setStores(stores);
-      setMedicalSupplies(medicalSupplies);
-    } else {
-      return Alert.alert('', Languages.SomethingWentWrong, [
-        {text: Languages.Yes},
-      ]);
-    }
-    if (user) {
-      let data2 = await ks.DrugStoreGet({
-        langID: Languages.langID,
-        userID: user.ID,
-      });
-
-      if (data2.Success) {
-        let userStores = data2.DrugStores.filter(
-          (_store: any) =>
-            _store.IsDrugStore &&
-            _store.IsAvailable === Constants.USER_STORE_STATUSES.ACCEPTED,
-        );
-        let userSupplies = data2.DrugStores.filter(
-          (_store: any) =>
-            !_store.IsDrugStore &&
-            _store.IsAvailable === Constants.USER_STORE_STATUSES.ACCEPTED,
-        );
-        setUserStores(userStores);
-        setUserSupplies(userSupplies);
-        // setLoading(true);
-      } else {
-        return Alert.alert('', Languages.SomethingWentWrong, [
-          {text: Languages.Yes},
-        ]);
-      }
-    } else {
-      // setLoading(false);
-    }
-
-    /////////////////////////////////
-    let dat3 = await ks.AdsGet({isAdmin: true, langID: Languages.langID});
-    if (dat3.Success) {
-      setBanners(dat3.Ads);
-    }
-
-    setupToken();
-    setLoading(false);
-  };
-
   const refreshData = () => {
-    setLoading(true);
-    getDrugs(city);
-    handleAccessButtons();
-    getAds();
-    getNotifications();
-    GetMyOrders();
-    setupToken();
-    getUserPoints();
-    setTimeout(() => {
-      setLoading(false);
-    }, 8000);
+    getinitData();
   };
 
+  // const getDrugs = (city: any) => {
+  //   // setLoading(true);
+  //   ks.DrugStoreGet({
+  //     langID: Languages.langID,
+  //     AreaID: city.ID,
+  //     userID: user.ID,
+  //   }).then((data: any) => {
+  //     if (data.Success) {
+  //       let stores = data.DrugStores.filter(
+  //         (_store: any) => _store.IsDrugStore,
+  //       );
+  //       let medicalSupplies = data.DrugStores.filter(
+  //         (_store: any) => !_store.IsDrugStore,
+  //       );
+  //       setStores(stores);
+  //       setMedicalSupplies(medicalSupplies);
+  //     } else {
+  //       return Alert.alert('', Languages.SomethingWentWrong, [
+  //         {text: Languages.Yes},
+  //       ]);
+  //     }
+  //     if (user) {
+  //       ks.DrugStoreGet({
+  //         langID: Languages.langID,
+  //         userID: user.ID,
+  //       })
+  //         .then((data: any) => {
+  //           if (data.Success) {
+  //             let userStores = data.DrugStores.filter(
+  //               (_store: any) =>
+  //                 _store.IsDrugStore &&
+  //                 _store.IsAvailable === Constants.USER_STORE_STATUSES.ACCEPTED,
+  //             );
+  //             let userSupplies = data.DrugStores.filter(
+  //               (_store: any) =>
+  //                 !_store.IsDrugStore &&
+  //                 _store.IsAvailable === Constants.USER_STORE_STATUSES.ACCEPTED,
+  //             );
+  //             setUserStores(userStores);
+  //             setUserSupplies(userSupplies);
+  //             // setLoading(true);
+  //           } else {
+  //             return Alert.alert('', Languages.SomethingWentWrong, [
+  //               {text: Languages.Yes},
+  //             ]);
+  //           }
+  //         })
+  //         .finally(() => {
+  //           // setLoading(false);
+  //         });
+  //     } else {
+  //       // setLoading(false);
+  //     }
+  //   });
+  // };
   const getDrugs = async (city: any) => {
     // setLoading(true);
     let data = await ks.DrugStoreGet({
@@ -342,237 +521,11 @@ const HomeScreen = (props: any) => {
     />
   );
 
-  const getUserFavourites = async () => {
-    setLoadingFavourites(true);
-
-    let data = await ks.GetUserFavourites({
-      UserID: user.ID,
-      LangID: Languages.langID,
-    });
-    if (data?.Success) {
-      setFavouritesList(data.Products);
-    }
-    setLoadingFavourites(false);
-  };
-
-  /////////////////////header Modal///////////////////////
-  const ordersModal = () => {
-    return (
-      <Modal
-        ref={ordersPopup}
-        swipeToClose={false}
-        onOpened={GetMyOrders}
-        backButtonClose
-        useNativeDriver
-        coverScreen
-        style={{
-          backgroundColor: 'transparent',
-          width: '100%',
-          height: '100%',
-          position: 'absolute',
-          alignSelf: 'center',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
-        <View style={{width: '100%', flex: 1, backgroundColor: '#fff'}}>
-          <Header
-            title={Languages.MyOrders}
-            showCloseIcon
-            extraStyle={{height: 50, paddingTop: 0}}
-            onClosePress={() => ordersPopup.current.close()}
-          />
-
-          <FlatList
-            data={myOrders}
-            style={{width: '100%', flex: 1}}
-            contentContainerStyle={{paddingVertical: 5}}
-            keyExtractor={item => item.ID}
-            renderItem={({item, index}) => (
-              <TouchableOpacity
-                style={styles.ordersCards}
-                onPress={() => {
-                  ordersPopup.current.close();
-                  props.navigation.navigate('OrderDetails', {
-                    OrderID: item.OrderID,
-                  });
-                }}>
-                <Text style={{alignSelf: 'flex-start'}}>
-                  {moment(item.OrderDate).format('DD/MM/YYYY')}
-                </Text>
-                <Text style={{color: '#000'}}>{item.OwnerName}</Text>
-                <Text style={{color: '#000'}}>{item.MerchantName}</Text>
-                <Text style={{}}>{' # ' + item.OrderID}</Text>
-                <Text style={{fontSize: 16, color: '#000'}}>
-                  {item.FormattedOrderTotal} $
-                </Text>
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-      </Modal>
-    );
-  };
-  const favouritesModal = () => {
-    return (
-      <Modal
-        ref={favouritesPopup}
-        swipeToClose={false}
-        backButtonClose
-        onOpened={getUserFavourites}
-        onClosed={() => {
-          setFavouritesList([]);
-          setLoadingFavourites(true);
-        }}
-        useNativeDriver
-        coverScreen
-        style={styles.modals}>
-        <View
-          style={{
-            width: '100%',
-            flex: 1,
-            backgroundColor: '#fff',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingVertical: 10,
-          }}>
-          <Text
-            style={{
-              fontSize: 26,
-              color: AppColors.primary,
-              alignSelf: 'center',
-              marginBottom: 20,
-            }}>
-            {Languages.Favourites}
-          </Text>
-
-          {loadingFavourites ? (
-            <ActivityIndicator color={AppColors.primary} size="large" />
-          ) : (
-            <FlatList
-              data={FavouritesList}
-              style={{width: '100%', flex: 1}}
-              contentContainerStyle={{alignItems: 'center'}}
-              keyExtractor={item => item.ID}
-              ListEmptyComponent={() => (
-                <Text
-                  style={{
-                    alignSelf: 'center',
-                    fontSize: 20,
-                    textAlign: 'center',
-                    marginTop: Dimensions.get('screen').height * 0.3,
-                  }}>
-                  {Languages.NoFavListings}
-                </Text>
-              )}
-              renderItem={({item, index}) => (
-                <FavouriteItemsCards
-                  animation={'fadeInRight'}
-                  delay={150 + index * 150}
-                  item={item}
-                  {...props}
-                  showCartBtn={false}
-                  store={{ID: '', Name: '', DeliveryTime: ''}}
-                  type={Constants.STORE_TYPE}
-                  reloadList={getUserFavourites}
-                  closeModal={() => favouritesPopup.current.close()}
-                />
-              )}
-            />
-          )}
-
-          <AppButton
-            onPress={() => favouritesPopup.current.close()}
-            isLoading={false}
-            text={Languages.close}
-            extraStyle={{marginBottom: 0, width: '92%'}}
-          />
-        </View>
-      </Modal>
-    );
-  };
-  const pointsModal = () => {
-    return (
-      <Modal
-        ref={pointsPopup}
-        swipeToClose={false}
-        onOpened={getUserPoints}
-        backButtonClose
-        useNativeDriver
-        coverScreen
-        style={styles.modals}>
-        <View
-          style={{
-            width: '100%',
-            flex: 1,
-            backgroundColor: '#fff',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingVertical: 10,
-          }}>
-          <Text
-            style={{
-              fontSize: 26,
-              color: AppColors.primary,
-              alignSelf: 'center',
-            }}>
-            {Languages.Points}
-          </Text>
-
-          <AppIcon
-            name="infocirlceo"
-            type="AntDesign"
-            color={'green'}
-            size={24}
-            style={{position: 'absolute', top: 0, left: 0, margin: 15}}
-            onPress={() =>
-              Alert.alert('', Languages.ReplacePointsMessage, [
-                {text: Languages.OK},
-              ])
-            }
-          />
-
-          <FlatList
-            data={userPoints}
-            style={{width: '100%', flex: 1, marginTop: 25}}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({item, index}) => (
-              <View
-                style={{
-                  width: '100%',
-                  height: 50,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  paddingHorizontal: 10,
-                  alignSelf: 'center',
-                  borderTopWidth: 0,
-                  borderBottomWidth: 1,
-                  borderColor: '#bbb',
-                }}>
-                <Text style={{fontSize: 18, color: '#111'}}>
-                  {item.DrugStoreName}
-                </Text>
-                <Text style={{fontSize: 18, color: '#111'}}>{item.Point}</Text>
-              </View>
-            )}
-          />
-          <AppButton
-            onPress={() => pointsPopup.current.close()}
-            isLoading={false}
-            text={Languages.close}
-            extraStyle={{marginBottom: 0, width: '92%'}}
-          />
-          {/* extraStyle={{position:'absolute', bottom:0, alignSelf: 'center'}} */}
-        </View>
-      </Modal>
-    );
-  };
   const notificationsModal = () => {
     return (
       <Modal
         ref={notificationsPopup}
         swipeToClose={false}
-        onOpend={getNotifications}
         onClosed={getNotifications}
         backButtonClose
         useNativeDriver
@@ -653,7 +606,7 @@ const HomeScreen = (props: any) => {
   const HomeComponent = (props: any) =>
     loading ? (
       <ActivityIndicator
-        size={'large'}
+        size={'small'}
         color={AppColors.primary}
         style={{flex: 1}}
       />
@@ -1086,6 +1039,63 @@ const HomeScreen = (props: any) => {
     if (data.Success) {
       setMyOrders(data.orders);
     }
+  };
+
+  const ordersModal = () => {
+    return (
+      <Modal
+        ref={ordersPopup}
+        swipeToClose={false}
+        onOpened={GetMyOrders}
+        backButtonClose
+        useNativeDriver
+        coverScreen
+        style={{
+          backgroundColor: 'transparent',
+          width: '100%',
+          height: '100%',
+          position: 'absolute',
+          alignSelf: 'center',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+        <View style={{width: '100%', flex: 1, backgroundColor: '#fff'}}>
+          <Header
+            title={Languages.MyOrders}
+            showCloseIcon
+            extraStyle={{height: 50, paddingTop: 0}}
+            onClosePress={() => ordersPopup.current.close()}
+          />
+
+          <FlatList
+            data={myOrders}
+            style={{width: '100%', flex: 1}}
+            contentContainerStyle={{paddingVertical: 5}}
+            keyExtractor={item => item.ID}
+            renderItem={({item, index}) => (
+              <TouchableOpacity
+                style={styles.ordersCards}
+                onPress={() => {
+                  ordersPopup.current.close();
+                  props.navigation.navigate('OrderDetails', {
+                    OrderID: item.OrderID,
+                  });
+                }}>
+                <Text style={{alignSelf: 'flex-start'}}>
+                  {moment(item.OrderDate).format('DD/MM/YYYY')}
+                </Text>
+                <Text style={{color: '#000'}}>{item.OwnerName}</Text>
+                <Text style={{color: '#000'}}>{item.MerchantName}</Text>
+                <Text style={{}}>{' # ' + item.OrderID}</Text>
+                <Text style={{fontSize: 16, color: '#000'}}>
+                  {item.FormattedOrderTotal} ID
+                </Text>
+              </TouchableOpacity>
+            )}
+          />
+        </View>
+      </Modal>
+    );
   };
 
   return (

@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   ScrollView,
@@ -12,6 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   I18nManager,
+  Linking,
 } from 'react-native';
 import {Languages, AppIcon, Constants} from '../../common';
 import {
@@ -27,6 +28,8 @@ import {useSelector, useDispatch} from 'react-redux';
 import {default as FAIcon} from 'react-native-vector-icons/dist/Entypo';
 import ks from '../../services/KSAPI';
 import {Header, AppButton, AppInput} from '../../components';
+import PhoneInput from 'react-native-phone-input';
+import {call} from 'react-native-reanimated';
 
 interface props {
   navigation: any;
@@ -34,6 +37,7 @@ interface props {
 }
 
 const RegisterScreen = (props: props) => {
+  const phoneRef = useRef();
   const [name, setName] = useState('');
   const [userName, setuserName] = useState('');
   const [email, setEmail] = useState('');
@@ -50,6 +54,7 @@ const RegisterScreen = (props: props) => {
   const [eyerePassword, seteyerePassword] = useState(false);
   const [NewUser, setNewUser] = useState([]);
   const [eyePassword, seteyePassword] = useState(false);
+  const [valid, SetValid] = useState('');
   useEffect(() => {
     setIsLoading(false);
   }, []);
@@ -61,6 +66,10 @@ const RegisterScreen = (props: props) => {
       if (data.success == 1) {
         Alert.alert(Languages.Success, Languages.RegisterRequestPending, [
           {text: 'OK', onPress: () => console.log('OK Pressed')},
+          {
+            text: Languages.Contact,
+            onPress: () => Linking.openURL(`tel:${'+9647840201997'}`),
+          },
         ]);
         props.navigation.navigate('LoginScreen');
         setloading(true);
@@ -69,23 +78,40 @@ const RegisterScreen = (props: props) => {
     });
   };
   const CheckUserName = () => {
+    console.log(userName);
+    setIsCheckUserName(true);
     ks.CheckUserName({
       UserName: userName,
     }).then((data: any) => {
-      setIsCheckUserName(data.Success);
+      console.log(data);
+      if (data.Success) {
+        setIsCheckUserName(data.Success);
+      } else {
+        setIsCheckUserName(false);
+        CheckPhone();
+      }
     });
   };
   const CheckPhone = () => {
+    let _phone = phoneNumber[0] == 0 ? phoneNumber.slice(1) : phoneNumber;
+
     ks.CheckPhone({
-      Phone: phoneNumber,
+      Phone: _phone,
     }).then((data: any) => {
-      setIsCheckPhone(data.Success);
+      if (data.Success) {
+        console.log(data);
+        setIsCheckPhone(data.Success);
+      } else {
+        setIsCheckPhone(false);
+        Step2();
+      }
     });
   };
-  const sendOtp = () => {
+  const sendOtp = (id = null) => {
+    console.log();
     setloading(false);
     ks.OtpsendSMS({
-      UserID: NewUser?.ID,
+      UserID: id || NewUser?.ID,
       LangID: Languages.langID,
     }).then((data: any) => {
       if (data.Success) {
@@ -99,52 +125,51 @@ const RegisterScreen = (props: props) => {
       return Alert.alert('', Languages.FillItemsCorrect, [
         {text: Languages.Yes},
       ]);
-    }
-    if (email.length > 0) {
+    } else if (email.length > 0) {
       if (!email.includes('.') || !email.includes('@')) {
         return Alert.alert('', Languages.EnterValidEmail, [
           {text: Languages.Yes},
         ]);
       }
-    }
-
-    if (phoneNumber.length < 7) {
+    } else if (phoneNumber.length < 7) {
       return Alert.alert('', Languages.EnterValidPhoneNumber, [
         {text: Languages.Yes},
       ]);
-    }
-
-    if (password !== confirmPassword) {
+    } else if (password !== confirmPassword) {
       return Alert.alert('', Languages.PasswordDoesntMatch, [
         {text: Languages.Yes},
       ]);
     }
-    if (IsCheckUserName) {
-      return Alert.alert('', Languages.IsUserName, [{text: Languages.Yes}]);
+    // if (IsCheckUserName) {
+    //   return Alert.alert('', Languages.IsUserName, [{text: Languages.Yes}]);
+    // }
+    // if (IsCheckPhone) {
+    //   return Alert.alert('', Languages.IsPhone, [{text: Languages.Yes}]);
+    // }
+    else {
+      setIsLoading(true);
+      setTimeout(() => {
+        onRegister();
+      }, 1000);
     }
-    if (IsCheckPhone) {
-      return Alert.alert('', Languages.IsPhone, [{text: Languages.Yes}]);
-    }
-    setIsLoading(true);
-    setTimeout(() => {
-      onRegister();
-    }, 1000);
   };
   const onRegister = () => {
     setIsLoading(true);
-
+    let _phone = phoneNumber[0] == 0 ? phoneNumber.slice(1) : phoneNumber;
+    console.log(_phone);
     ks.Register({
       userName: userName,
       email: email,
       password: password,
       name: name,
-      phone: phoneNumber,
+      phone: _phone,
       langID: Languages.langID,
     })
       .then((data: any) => {
+        console.log(data);
         if (data.Success) {
           setNewUser(data.User);
-          sendOtp();
+          sendOtp(data.User.ID);
           setisotp(true);
         }
       })
@@ -155,7 +180,7 @@ const RegisterScreen = (props: props) => {
 
   return isLoading ? (
     <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-      <ActivityIndicator size="large" color={AppColors.primary} />
+      <ActivityIndicator size="small" color={AppColors.primary} />
     </View>
   ) : (
     <KeyboardAvoidingView
@@ -239,20 +264,89 @@ const RegisterScreen = (props: props) => {
             }}
             extraStyle={{textAlign: 'left', ...FontWeights.Bold}}
           />
-          <AppInput
-            containerExtraStyle={{
+          <View
+            style={{
               borderWidth: 2,
               borderColor: 'red',
-            }}
-            placeholder={Languages.PhoneNumber}
-            value={phoneNumber}
-            onChangeText={(text: any) => {
-              if (isNaN(text)) return;
-              setPhoneNumber(text);
-            }}
-            keyboardType="number-pad"
-            extraStyle={{textAlign: 'left', ...FontWeights.Bold}}
-          />
+              width: '80%',
+              borderRadius: 18,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}>
+            <Text
+              style={{
+                fontSize: 18,
+                color: 'red',
+                paddingHorizontal: 10,
+                //  borderEndColor: AppColors.primary,
+                // borderEndWidth: 1,
+              }}>
+              +964
+            </Text>
+            <TextInput
+              value={phoneNumber}
+              style={{
+                textAlign: I18nManager.isRTL ? 'right' : 'left',
+                ...FontWeights.Bold,
+                flex: 1,
+              }}
+              onChangeText={(text: any) => {
+                if (isNaN(text)) return;
+                setPhoneNumber(text);
+              }}
+              placeholder={Languages.PhoneNumber}
+              keyboardType="number-pad"
+            />
+          </View>
+
+          {/* /////////////////////////////////////////////////////////////////////////// */}
+          {/* <View
+            style={{
+              borderWidth: 2,
+              borderColor: 'red',
+              width: '80%',
+              borderRadius: 15,
+              overflow: 'hidden',
+            }}>
+            <PhoneInput
+              textProps={{
+                textAlign: 'right',
+              }}
+              onPressFlag={() => ''}
+              initialValue={'96479XXXXXXX'}
+              allowZeroAfterCountryCode={false}
+              initialCountry="iq"
+              textStyle={{
+                width: '100%',
+              }}
+              style={{
+                width: '100%',
+                flexDirection: 'row',
+                height: 40,
+                marginTop: 10,
+                paddingHorizontal: 8,
+                margin: 0,
+
+                // borderBottomColor: AppColor.blackDivide,
+                //  borderBottomWidth: 1,
+              }}
+              flagStyle={{
+                opacity: 1,
+                margin: 4,
+                resizeMode: 'contain',
+                backgroundColor: 'transparent',
+                borderWidth: 0,
+                width: 30,
+                height: 20,
+              }}
+              onChangePhoneNumber={t => {
+                if (isNaN(t)) return;
+                setPhoneNumber(t);
+              }}
+            />
+          </View> */}
+          {/* /////////////////////////////////////////////////////////////////////////// */}
+
           {IsCheckPhone && (
             <View
               style={{
@@ -344,9 +438,9 @@ const RegisterScreen = (props: props) => {
           <AppButton
             text={Languages.RegisterNow}
             onPress={() => {
+              setIsCheckPhone(false);
+              setIsCheckUserName(false);
               CheckUserName();
-              CheckPhone();
-              Step2();
             }}
           />
         </ScrollView>

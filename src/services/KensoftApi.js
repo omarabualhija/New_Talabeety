@@ -109,7 +109,7 @@ KensoftApi.prototype.SaveCart = function (data, callback) {
 };
 KensoftApi.prototype.CartCheckout = function (data, callback) {
   var requestUrl = this.url + 'services/CartCheckout?';
-
+  console.log(requestUrl);
   return this._requestPost(requestUrl, data, response => {
     return response;
   });
@@ -118,6 +118,7 @@ KensoftApi.prototype.CartCheckout = function (data, callback) {
 KensoftApi.prototype.DrugStoreGet = function (data, callback) {
   var requestUrl = this.url + `services/DrugStoreGet?`;
   requestUrl += this.join(data, '&');
+  console.log(requestUrl);
   return this._request(requestUrl);
 };
 KensoftApi.prototype.UserVerifyOTP = function (data, callback) {
@@ -316,7 +317,7 @@ KensoftApi.prototype.MyOrders = function (data, callback) {
 KensoftApi.prototype.getCart = function (data, callback) {
   var requestUrl = this.url + 'services/getCart?';
   requestUrl += this.join(data, '&');
-
+  console.log(requestUrl);
   return this._request(requestUrl, data, response => {
     return response;
   });
@@ -341,6 +342,7 @@ KensoftApi.prototype.GetOrderDetails = function (data, callback) {
 KensoftApi.prototype.CancelOrder = function (data, callback) {
   var requestUrl = this.url + 'services/CancelOrder?';
   requestUrl += this.join(data, '&');
+
   return this._request(requestUrl, data, response => {
     return response;
   });

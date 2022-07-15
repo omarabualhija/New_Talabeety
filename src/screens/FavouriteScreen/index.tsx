@@ -23,7 +23,6 @@ const FavouriteScreen = (props: any) => {
   const {store, type} = props.route.params;
 
   useEffect(() => {
-  
     ks.GetUserFavourites({
       UserID: user.ID,
       LangID: Languages.langID,
@@ -47,7 +46,7 @@ const FavouriteScreen = (props: any) => {
         <ActivityIndicator
           style={{flex: 1}}
           color={AppColors.primary}
-          size="large"
+          size="small"
         />
       </View>
     );
@@ -79,6 +78,7 @@ const FavouriteScreen = (props: any) => {
         keyExtractor={(item: any) => item.ID}
         renderItem={({item, index}) => (
           <ItemCard
+            navigation={props.navigation}
             animation={'fadeInRight'}
             key={index}
             delay={0}

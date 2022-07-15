@@ -1,7 +1,7 @@
 import HomeScreen from './HomeScreen';
 import ProfileScreen from './ProfileScreen';
 import ChatScreen from './ChatScreen';
-import CartScreen from './CartScreen';
+import CartScreen from './CartScreen/index';
 import SettingsScreen from './SettingsScreen';
 import SplashScreen from './SplashScreen';
 import EditProfileScreen from './EditProfileScreen';
@@ -17,6 +17,7 @@ import CategoryItemsScreen from './CategoryItemsScreen';
 import OrderDetails from './OrderDetails';
 import SearchScreen from './SearchScreen';
 import FavouriteScreen from './FavouriteScreen';
+import DetailsCartScreen from './CartScreen/DetailsCartScreen';
 
 export {
   HomeScreen,
@@ -38,4 +39,5 @@ export {
   OrderDetails,
   SearchScreen,
   FavouriteScreen,
+  DetailsCartScreen,
 };

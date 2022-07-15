@@ -109,14 +109,15 @@ const OrderDetails = props => {
           <Text style={styles.body}>
             {Languages.SingleItemPrice.replace(
               '*',
-              item?.UnitPrice?.toFixed(2) + '$',
+              item?.UnitPrice?.toFixed(2) + Languages.symbolPrice,
             )}
           </Text>
 
           <Text style={{...styles.body, color: 'green'}}>
             {Languages.SingleItemTotalPrice.replace(
               '*',
-              (item.UnitPrice * item.Quantity)?.toFixed(2) + '$',
+              (item.UnitPrice * item.Quantity)?.toFixed(2) +
+                Languages.symbolPrice,
             )}
           </Text>
 
@@ -134,49 +135,71 @@ const OrderDetails = props => {
     );
   };
 
-  const reorderItems = () => {
-    setLoadingReorder(true);
-    let arr = orderInfo.Items.map(item => ({
-      quantity: item.Quantity,
-      notes: item.Notes,
-      DrugStoreID: item.DrugStoreID,
-      Price: item.UnitPrice,
-      ...item,
-    }));
-    arr.forEach(item =>
-      dispatch(
-        addToCart({
-          store: {
-            Name: item.DrugStoreName,
-            ID: item.DrugStoreID,
-            DeliveryTime: '',
-          },
-          item,
-        }),
-      ),
-    );
-    setLoadingReorder(false);
+  // const reorderItems = () => {
+  //   setLoadingReorder(true);
+  //   let arr = orderInfo.Items.map(item => ({
+  //     quantity: item.Quantity,
+  //     notes: item.Notes,
+  //     DrugStoreID: item.DrugStoreID,
+  //     Price: item.UnitPrice,
+  //     ...item,
+  //   }));
+  //   arr.forEach(item =>
+  //     dispatch(
+  //       addToCart({
+  //         store: {
+  //           Name: item.DrugStoreName,
+  //           ID: item.DrugStoreID,
+  //           DeliveryTime: '',
+  //         },
+  //         item,
+  //       }),
+  //     ),
+  //   );
+  //   setLoadingReorder(false);
 
-    // ks.CartCheckout({
-    //   uid: user.ID,
-    //   addressid: '2',
-    //   prods: arr,
-    //   langID: Languages.langID,
-    // }).then((data) => {
-    //   if (data.Success) {
-    //     Alert.alert('', Languages.ReorderedSuccessfully);
-    //   } else {
-    //     Alert.alert('', Languages.SomethingWentWrong, [{text: Languages.OK}]);
-    //   }
-    // });
+  //   // ks.CartCheckout({
+  //   //   uid: user.ID,
+  //   //   addressid: '2',
+  //   //   prods: arr,
+  //   //   langID: Languages.langID,
+  //   // }).then((data) => {
+  //   //   if (data.Success) {
+  //   //     Alert.alert('', Languages.ReorderedSuccessfully);
+  //   //   } else {
+  //   //     Alert.alert('', Languages.SomethingWentWrong, [{text: Languages.OK}]);
+  //   //   }
+  //   // });
+  // };
+
+  const reorderItems = () => {
+    console.log(orderInfo.Items);
+    orderInfo.Items.map(item => {
+      setLoading(true);
+      ks.SaveCart({
+        userid: user.ID,
+        notes: '',
+        pID: item.ID,
+        qty: item.Quantity,
+        UnitPrice: item.UnitPrice,
+      }).then(data => {
+        console.log(data);
+      });
+    });
+
+    setLoading(false);
   };
 
   const cancelOrder = () => {
-    ks.CancelOrder({
-      uid: user.ID,
+    let da = {
+      UserID: user.ID,
       OrderID: orderInfo.OrderID,
       Cancelreason: '',
-    }).then(data => {
+    };
+    console.log(da);
+
+    ks.CancelOrder(da).then(data => {
+      console.log(data);
       if (data.Success) {
         Alert.alert('', Languages.OrderCanceled);
         props.navigation.goBack();
@@ -334,7 +357,7 @@ const OrderDetails = props => {
             justifyContent: 'center',
             alignItems: 'center',
           }}>
-          <ActivityIndicator size="large" color={AppColors.primary} />
+          <ActivityIndicator size="small" color={AppColors.primary} />
         </View>
       ) : (
         <View style={{width: '100%', flex: 1}}>
@@ -367,7 +390,15 @@ const OrderDetails = props => {
             {Languages.OrderOmnerName}
             {orderInfo.OwnerName}
           </Text>
-
+          <Text
+            style={{
+              ...FontSizes.Body,
+              color: AppColors.primary,
+              padding: 10,
+            }}>
+            {Languages.usedPoints} :{' '}
+            {orderInfo.UsedPoints != '' ? orderInfo.UsedPoints : 0}
+          </Text>
           <Text
             style={{
               ...FontSizes.Body,
@@ -431,7 +462,7 @@ const OrderDetails = props => {
                   color: AppColors.primary,
                   marginHorizontal: 10,
                 }}>
-                {orderInfo?.OrderTotal + ' $ '}
+                {orderInfo?.OrderTotal + Languages.symbolPrice}
               </Text>
             </View>
 
@@ -451,7 +482,7 @@ const OrderDetails = props => {
                 onPress={() =>
                   Alert.alert(Languages.Reorder, Languages.SureToReorder, [
                     {text: Languages.No},
-                    {text: Languages.Yes, onPress: reorderItems},
+                    {text: Languages.Yes, onPress: () => reorderItems()},
                   ])
                 }
                 extraStyle={{
@@ -500,7 +531,7 @@ const OrderDetails = props => {
             position: 'absolute',
             zIndex: 99,
           }}>
-          <ActivityIndicator size={'large'} color={AppColors.primary} />
+          <ActivityIndicator size={'small'} color={AppColors.primary} />
         </View>
       )}
     </View>

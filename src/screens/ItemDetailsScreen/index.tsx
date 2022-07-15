@@ -1,4 +1,4 @@
-import React, {useRef, useState, useEffect} from 'react';
+import React, {useRef, useState, useEffect, useLayoutEffect} from 'react';
 import {
   StyleSheet,
   Text,
@@ -42,6 +42,7 @@ const ItemDetailsScreen = (props: any) => {
   const [currentIndex, setCurrentIndex] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [isLoadingAdd, setIsLoadingAdd] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [RequestLoading, setRequestLoading] = useState(false);
   const [ShowPrice, setShowPrice] = useState(
     props?.route?.params?.ShowPrice || false,
@@ -52,7 +53,27 @@ const ItemDetailsScreen = (props: any) => {
   const scrollViewRef = useRef<any>(null);
 
   const {store, type, item} = props.route.params;
-  useEffect(() => {}, []);
+  useLayoutEffect(() => {
+    CheckCartProduct();
+  }, []);
+
+  const CheckCartProduct = () => {
+    setIsLoading(true);
+    ks.CheckCartProduct({
+      userid: user.ID,
+      pID: item.ID,
+    }).then(date => {
+      if (date.success) {
+        if (date.Check) {
+          setQuantity(date.qnt);
+        }
+      } else {
+        setQuantity(1);
+      }
+      setIsLoading(false);
+    });
+  };
+
   const SaveCart = () => {
     ks.SaveCart({
       userid: user.ID,
@@ -238,7 +259,13 @@ const ItemDetailsScreen = (props: any) => {
 
   return (
     <>
-      <Header {...props} title={Languages.ItemDetails} showBackIcon />
+      <Header
+        {...props}
+        title={Languages.ItemDetails}
+        showBackIcon
+        //customBack={() => props.navigation.navigate('CategoryItemsScreen')}
+      />
+
       <ScrollView
         ref={scrollViewRef}
         style={styles.container}
@@ -382,6 +409,7 @@ const ItemDetailsScreen = (props: any) => {
                 color={AppColors.white}
               />
             </View>
+
             {ShowPrice ? (
               <View style={styles.detailsText}>
                 <Text
@@ -390,8 +418,9 @@ const ItemDetailsScreen = (props: any) => {
                     ...FontSizes.Body,
                     color: AppColors.primary,
                     fontSize: 15,
+                    textAlign: 'center',
                   }}>
-                  {Languages.ItemPrice.replace('*', item.Price) + '$'}
+                  {item.Price + Languages.symbolPrice}
                 </Text>
                 {item.OldPrice ? (
                   <Text
@@ -401,7 +430,8 @@ const ItemDetailsScreen = (props: any) => {
                       color: AppColors.primary,
                       fontSize: 15,
                     }}>
-                    {Languages.OldPrice.replace('*', item.OldPrice) + '$'}
+                    {Languages.OldPrice.replace('*', item.OldPrice) +
+                      Languages.symbolPrice}
                   </Text>
                 ) : null}
               </View>
@@ -557,147 +587,152 @@ const ItemDetailsScreen = (props: any) => {
             ).replace('^', item.BonusEach.toString())}
           />
         )}
-
-        {false && (
-          <QuantityButtons
-            value={quantity}
-            onMinus={() => {
-              if (quantity > 1) {
-                setQuantity(quantity - 1);
-              }
-            }}
-            onPlus={() => {
-              if (item.Quantity > 0) {
-                if (quantity < item.Quantity) {
-                  setQuantity(quantity + 1);
-                }
-              } else {
-                setQuantity(quantity + 1);
-              }
-            }}
-          />
-        )}
-        <View
-          style={{
-            width: '100%',
-            //backgroundColor:'red',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}>
-          <TouchableOpacity
-            onPress={() => {
-              if (item.Quantity > 0) {
-                if (parseInt(quantity) < parseInt(item.Quantity)) {
-                  //  if (quantity < item.MaxQuantity) {
-                  setQuantity(quantity + 1);
-                }
-              } else {
-                setQuantity(1);
-
-                Alert.alert('', Languages.NoAvailableQuantity, [
-                  {text: Languages.OK},
-                ]);
-              }
-            }}
-            disabled={props.isLoading}>
-            <AppIcon
-              type={'AntDesign'}
-              name={'pluscircle'}
-              size={30}
-              color={props.isLoading ? AppColors.darkGrey : AppColors.primary}
-            />
-          </TouchableOpacity>
-          <View
-            style={{
-              borderRadius: 10,
-              borderWidth: 1,
-              borderColor: AppColors.primary,
-              backgroundColor: AppColors.white,
-              width: 50,
-              height: 45,
-              justifyContent: 'center',
-            }}>
-            {props.isLoading ? (
-              <View style={{}}>
-                <ActivityIndicator size={'small'} color={AppColors.primary} />
-              </View>
-            ) : (
-              <View style={{}}>
-                <TextInput
-                  keyboardType="numeric"
-                  value={quantity.toString()}
-                  placeholder={quantity.toString()}
-                  onChangeText={txt => {
-                    if (item.Quantity > 0) {
-                      if (parseInt(quantity) < parseInt(item.Quantity)) {
-                        setQuantity(parseInt(txt));
-                        // setTimeout(() => { handleOnAddToCart}, 1000);
-                      } else {
-                        setQuantity(1);
-                        Alert.alert('', Languages.NoAvailableQuantity, [
-                          {text: Languages.OK},
-                        ]);
-                      }
-                    } else {
-                      setQuantity(1);
-                      Alert.alert('', Languages.NoAvailableQuantity, [
-                        {text: Languages.OK},
-                      ]);
+        {item?.Quantity > 1 ? (
+          isLoading ? (
+            <View
+              style={{
+                height: 65,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              <ActivityIndicator size="small" color={AppColors.primary} />
+            </View>
+          ) : (
+            <View
+              style={{
+                width: '100%',
+                //backgroundColor:'red',
+                flexDirection: 'row',
+                marginTop: 20,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              <TouchableOpacity
+                onPress={() => {
+                  if (item.Quantity > 0) {
+                    if (parseInt(quantity) < parseInt(item.Quantity)) {
+                      //  if (quantity < item.MaxQuantity) {
+                      setQuantity(quantity + 1);
                     }
-                  }}
-                  numberOfLines={1}
-                  maxLength={3}
-                  textAlign="center"
-                  style={{
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    fontSize: 17,
-                    borderColor: AppColors.primary,
-                  }}
+                  } else {
+                    setQuantity(1);
+
+                    Alert.alert('', Languages.NoAvailableQuantity, [
+                      {text: Languages.OK},
+                    ]);
+                  }
+                }}
+                disabled={props.isLoading}>
+                <AppIcon
+                  type={'AntDesign'}
+                  name={'pluscircle'}
+                  size={30}
+                  color={
+                    props.isLoading ? AppColors.darkGrey : AppColors.primary
+                  }
                 />
+              </TouchableOpacity>
+
+              <View
+                style={{
+                  borderRadius: 10,
+                  borderWidth: 1,
+                  borderColor: AppColors.primary,
+                  backgroundColor: AppColors.white,
+                  width: 50,
+                  height: 45,
+                  justifyContent: 'center',
+                }}>
+                {props.isLoading ? (
+                  <View style={{}}>
+                    <ActivityIndicator
+                      size={'small'}
+                      color={AppColors.primary}
+                    />
+                  </View>
+                ) : (
+                  <View style={{}}>
+                    <TextInput
+                      keyboardType="numeric"
+                      value={quantity.toString()}
+                      placeholder={quantity.toString()}
+                      onChangeText={txt => {
+                        if (item.Quantity > 0) {
+                          if (parseInt(quantity) < parseInt(item.Quantity)) {
+                            setQuantity(parseInt(txt));
+                          } else {
+                            setQuantity(1);
+                            Alert.alert('', Languages.NoAvailableQuantity, [
+                              {text: Languages.OK},
+                            ]);
+                          }
+                        } else {
+                          setQuantity(1);
+                          Alert.alert('', Languages.NoAvailableQuantity, [
+                            {text: Languages.OK},
+                          ]);
+                        }
+                      }}
+                      numberOfLines={1}
+                      maxLength={3}
+                      textAlign="center"
+                      style={{
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        fontSize: 17,
+                        borderColor: AppColors.primary,
+                      }}
+                    />
+                  </View>
+                )}
               </View>
-            )}
-          </View>
 
-          <TouchableOpacity
-            onPress={() => {
-              if (item.Quantity > 0) {
-                if (parseInt(quantity) < parseInt(item.Quantity)) {
-                  //  if (quantity < item.MaxQuantity) {
-                  setQuantity(quantity - 1);
-                }
-              } else {
-                setQuantity(1);
+              <TouchableOpacity
+                onPress={() => {
+                  if (item.Quantity > 0 && quantity > 0) {
+                    if (quantity > 1) {
+                      //  if (quantity < item.MaxQuantity) {
+                      setQuantity(quantity - 1);
+                    }
+                  } else {
+                    setQuantity(1);
 
-                Alert.alert('', Languages.NoAvailableQuantity, [
-                  {text: Languages.OK},
-                ]);
-              }
-            }}
-            disabled={props.isLoading}>
-            <AppIcon
-              type={'AntDesign'}
-              name={'minuscircle'}
-              size={30}
-              color={props.isLoading ? AppColors.darkGrey : AppColors.primary}
-            />
-          </TouchableOpacity>
-        </View>
-
-        {item?.Quantity < 1 && (
-          <Text style={{fontSize: 22, color: AppColors.red}}>
+                    Alert.alert('', Languages.NoAvailableQuantity, [
+                      {text: Languages.OK},
+                    ]);
+                  }
+                }}
+                disabled={props.isLoading}>
+                <AppIcon
+                  type={'AntDesign'}
+                  name={'minuscircle'}
+                  size={30}
+                  color={
+                    props.isLoading ? AppColors.darkGrey : AppColors.primary
+                  }
+                />
+              </TouchableOpacity>
+            </View>
+          )
+        ) : (
+          <Text style={{fontSize: 22, color: AppColors.red, marginTop: 20}}>
             {Languages.NoAvailableQuantity}
           </Text>
         )}
-        <AppButton
-          iconType="MaterialIcons"
-          iconName="add-shopping-cart"
-          text={Languages.AddtoCart}
-          onPress={handleOnAddToCart}
-          disabled={isLoadingAdd}
-          isLoading={isLoadingAdd}
-        />
+
+        {item?.Quantity > 1 ? (
+          <AppButton
+            iconType="MaterialIcons"
+            iconName="add-shopping-cart"
+            text={Languages.AddtoCart}
+            onPress={handleOnAddToCart}
+            disabled={isLoadingAdd}
+            isLoading={isLoadingAdd}
+          />
+        ) : (
+          <View style={{height: 20}} />
+        )}
+
         <Transitioning.View
           transition={transition}
           ref={animationRef}

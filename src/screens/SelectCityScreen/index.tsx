@@ -40,7 +40,7 @@ const SelectCity = (props: props) => {
 
   return isLoading ? (
     <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-      <ActivityIndicator size="large" color={AppColors.primary} />
+      <ActivityIndicator size="small" color={AppColors.primary} />
     </View>
   ) : (
     <>

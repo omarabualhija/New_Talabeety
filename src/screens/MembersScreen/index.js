@@ -139,6 +139,7 @@ const MembersScreen = props => {
                 placeholder={Languages.Email}
                 keyboardType="email-address"
               />
+
               <TextInput
                 numberOfLines={1}
                 multiline
@@ -263,7 +264,7 @@ const MembersScreen = props => {
 
   return loading ? (
     <ActivityIndicator
-      size="large"
+      size="small"
       color={AppColors.primary}
       style={{flex: 1}}
     />

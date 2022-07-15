@@ -1,5 +1,5 @@
 //@ts-nocheck
-import React, {useRef, useState, useEffect} from 'react';
+import React, {useRef, useState, useEffect, useLayoutEffect} from 'react';
 import {
   StyleSheet,
   Text,
@@ -27,125 +27,62 @@ const ItemCard = (props: any) => {
   const store = props.store;
   const type = props.type;
 
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [RequestLoading, setRequestLoading] = useState(false);
+  const [loadingQnt, setLoadingQnt] = useState(false);
   const [ShowPrice, setShowPrice] = useState(item?.ShowPrice || false);
   const [isFavorite, setIsFavorite] = useState(item?.IsFavorite || false);
 
   const [IsShow, setIsShow] = useState(false);
-  const [quantity, setQuantity] = React.useState(1);
+  const [quantity, setQuantity] = React.useState(0);
   const heeartRef = useRef();
   const animateShowPrice = useRef();
-
+  console.log(IsShow);
   const {cart, user} = useSelector(({data}: any) => data);
-  useEffect(() => {
+  useLayoutEffect(() => {
+    setIsLoading(true);
     CheckCartProduct();
-  }, [IsShow]);
+  }, [props.isFoucse]);
 
   const CheckCartProduct = () => {
+    setLoadingQnt(true);
     ks.CheckCartProduct({
       userid: user.ID,
       pID: item.ID,
     }).then(date => {
       if (date.success) {
+        date.qnt == 0 ? setIsShow(false) : setQuantity(date.qnt);
         if (date.Check) {
           setIsShow(date.Check);
+          setQuantity(date.qnt);
         }
       } else {
         setIsShow(false);
       }
+      setIsLoading(false);
+      setLoadingQnt(false);
     });
   };
-  const SaveCart = () => {
+  const SaveCart = qnt => {
+    setIsLoading(true);
     ks.SaveCart({
       userid: user.ID,
       notes: '',
       pID: item.ID,
-      qty: quantity,
+      qty: qnt,
       UnitPrice: item.Price,
     }).then(data => {
       if (data.success) {
+        setIsLoading(false);
         Alert.alert('', Languages.IsDone, [{text: Languages.OK}]);
-
+        getCart();
         CheckCartProduct();
       } else {
+        setIsLoading(false);
         alert('Erorr');
       }
     });
   };
-  const dispatch = useDispatch();
-  const onPlus = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      dispatch(onItemPlus(item.ID));
-      CheckCartProduct();
-      setIsLoading(false);
-    }, 50);
-  };
-  const onMinus = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      dispatch(onItemMinus(item.ID));
-      setIsLoading(false);
-    }, 50);
-  };
-
-  const handleOnAddToCart = () => {
-    // if (cart && cart.store && cart.store.ID !== store.ID) {
-    //   // return Alert.alert('', Languages.CantBuyFromDiffStores, [
-    //   //   {text: Languages.Yes},
-    //   // ]);
-    // }
-    // const itemExists =
-    //   cart && cart.items.find((_item: any) => _item.ID === item.ID);
-    // if (itemExists) {
-    //   return Alert.alert('', Languages.ItemAlreadyExists, [
-    //     {
-    //       text: Languages.Cancel,
-    //     },
-    //     {
-    //       text: Languages.Go,
-    //       onPress: () => props.navigation.navigate('CartScreen'),
-    //     },
-    //   ]);
-    // }
-
-    setIsLoading(true);
-    if (item.Quantity > 0) {
-      setTimeout(() => {
-        SaveCart();
-      }, 2000);
-    } else {
-      // Toast.show({
-      //   type: 'success',
-      //   text1: 'Hello',
-      //   text2:'asdfs'
-      // });
-      Alert.alert('', Languages.NoAvailableQuantity, [{text: Languages.OK}]);
-    }
-    setIsLoading(false);
-    // setTimeout(() => {
-    //   if (!cart) {
-    //     dispatch(
-    //       addToCart({
-    //         store,
-    //         item: {...item, quantity: quantity, ShowPrice},
-    //       }),
-    //     );
-    //   } else {
-    //     dispatch(
-    //       addToCart({
-    //         item: {...item, quantity: quantity, ShowPrice},
-    //       }),
-    //     );
-    //   }
-
-    //   setIsLoading(false);
-    // }, 100);
-  };
-  // const itemExists = cart
-  //   ? cart.items.find((_item: any) => _item.ID === item.ID)
-  //   : false;
 
   const priceSection = () => {
     return (
@@ -160,13 +97,13 @@ const ItemCard = (props: any) => {
                     color: AppColors.darkGrey,
                     textDecorationLine: 'line-through',
                   }}>
-                  {item.OldPrice + '$'}
+                  {item.OldPrice + Languages.symbolPrice}
                 </Text>
               )}
             </View>
             <View style={{marginHorizontal: 10}}>
               <Text style={{...styles.body, color: AppColors.darkGreen}}>
-                {item.Price + '$'}
+                {item.Price + Languages.symbolPrice}
               </Text>
             </View>
           </View>
@@ -175,7 +112,7 @@ const ItemCard = (props: any) => {
             ref={animateShowPrice}
             duration={500}
             style={{...styles.body, color: AppColors.darkGreen}}>
-            {item.Price + '$'}
+            {item.Price + Languages.symbolPrice}
           </Animatable.Text>
         ) : (
           <View style={{justifyContent: 'center'}}>
@@ -209,6 +146,17 @@ const ItemCard = (props: any) => {
         )}
       </View>
     );
+  };
+  const getCart = () => {
+    ks.getCart({
+      userid: user.ID,
+      LangID: Languages.langID,
+    }).then((data: any) => {
+      // dispatch(getCartItem(data.productsCart))
+      filterCart(data.productsCart);
+      setdata(data.productsCart);
+      setLoading(false);
+    });
   };
 
   const requestPrice = () => {
@@ -368,9 +316,9 @@ const ItemCard = (props: any) => {
                         if (parseInt(quantity) < parseInt(item.Quantity)) {
                           //  if (quantity < item.MaxQuantity) {
                           setQuantity(quantity + 1);
-                          setTimeout(() => {
-                            SaveCart();
-                          }, 2000);
+
+                          SaveCart(quantity + 1);
+
                           //  dispatch(onItemPlus(item.ID));
                         }
                       } else {
@@ -410,49 +358,52 @@ const ItemCard = (props: any) => {
                       </View>
                     ) : (
                       <View style={{}}>
-                        <TextInput
-                          keyboardType="numeric"
-                          value={quantity.toString()}
-                          placeholder={quantity.toString()}
-                          onChangeText={txt => {
-                            if (item.Quantity > 0) {
-                              if (
-                                parseInt(quantity) < parseInt(item.Quantity)
-                              ) {
-                                setQuantity(parseInt(txt));
-                                setTimeout(() => {
-                                  SaveCart();
-                                }, 2000);
-
-                                // dispatch(
-                                //   addToCart({
-                                //     store,
-                                //     item: {...item, quantity: quantity, ShowPrice},
-                                //   }),
-                                // );
+                        {loadingQnt ? (
+                          <ActivityIndicator
+                            size="small"
+                            color={AppColors.primary}
+                          />
+                        ) : (
+                          <TextInput
+                            editable={false}
+                            keyboardType="numeric"
+                            value={quantity.toString()}
+                            placeholder={quantity.toString()}
+                            placeholderTextColor={'#000'}
+                            onChangeText={txt => {
+                              if (item.Quantity > 0) {
+                                if (
+                                  parseInt(quantity) < parseInt(item.Quantity)
+                                ) {
+                                  setQuantity(parseInt(txt));
+                                  SaveCart(txt);
+                                } else {
+                                  setQuantity(1);
+                                  Alert.alert(
+                                    '',
+                                    Languages.NoAvailableQuantity,
+                                    [{text: Languages.OK}],
+                                  );
+                                }
                               } else {
                                 setQuantity(1);
                                 Alert.alert('', Languages.NoAvailableQuantity, [
                                   {text: Languages.OK},
                                 ]);
                               }
-                            } else {
-                              setQuantity(1);
-                              Alert.alert('', Languages.NoAvailableQuantity, [
-                                {text: Languages.OK},
-                              ]);
-                            }
-                          }}
-                          numberOfLines={1}
-                          maxLength={3}
-                          textAlign="center"
-                          style={{
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                            fontSize: 17,
-                            borderColor: AppColors.primary,
-                          }}
-                        />
+                            }}
+                            numberOfLines={1}
+                            maxLength={3}
+                            textAlign="center"
+                            style={{
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                              fontSize: 17,
+                              borderColor: AppColors.primary,
+                              color: '#000',
+                            }}
+                          />
+                        )}
                       </View>
                     )}
                   </View>
@@ -464,9 +415,7 @@ const ItemCard = (props: any) => {
                         if (item.Quantity > 0) {
                           setQuantity(quantity - 1);
 
-                          setTimeout(() => {
-                            SaveCart();
-                          }, 2000);
+                          SaveCart(quantity - 1);
                         } else {
                           Alert.alert('', Languages.NoAvailableQuantity, [
                             {text: Languages.OK},
@@ -496,7 +445,15 @@ const ItemCard = (props: any) => {
                     styles.addToCartBtn,
                     isLoading && {backgroundColor: AppColors.darkGrey},
                   ]}
-                  onPress={handleOnAddToCart}>
+                  onPress={() => {
+                    if (item.Quantity > 1) {
+                      SaveCart(1);
+                    } else {
+                      Alert.alert('', Languages.NoAvailableQuantity, [
+                        {text: Languages.OK},
+                      ]);
+                    }
+                  }}>
                   <View
                     style={{
                       flexDirection: 'row',
@@ -577,6 +534,8 @@ const ItemCard = (props: any) => {
   );
 };
 
+export default ItemCard;
+
 const styles = StyleSheet.create({
   container: {
     width: WIDTH,
@@ -650,5 +609,3 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
 });
-
-export default ItemCard;

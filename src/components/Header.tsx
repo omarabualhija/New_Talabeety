@@ -27,7 +27,7 @@ const Header = (props: any) => {
       style={[
         styles.container,
         {paddingRight: props.showBackIcon ? 25 : 0},
-      
+
         props.extraStyle,
       ]}>
       {props.showCloseIcon ? (
@@ -40,7 +40,10 @@ const Header = (props: any) => {
           />
         </TouchableOpacity>
       ) : props.showBackIcon ? (
-        <TouchableOpacity onPress={() => props.navigation.goBack()}>
+        <TouchableOpacity
+          onPress={() =>
+            props.customBack ? props.customBack : props.navigation.goBack()
+          }>
           <AntDesign
             name={I18nManager.isRTL ? 'arrowright' : 'arrowleft'}
             color={AppColors.white}
@@ -78,7 +81,7 @@ const Header = (props: any) => {
 const styles = StyleSheet.create({
   container: {
     width: WIDTH,
-   
+
     height: 90,
     alignSelf: 'center',
     flexDirection: 'row',

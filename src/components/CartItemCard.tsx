@@ -42,44 +42,60 @@ const CartItemCard = (props: any) => {
   React.useEffect(() => {}, []);
   const onPlus = () => {
     setIsLoading(true);
-    setTimeout(() => {
-      dispatch(onItemPlus(item.ID));
-      setIsLoading(false);
-    }, 200);
+
+    dispatch(onItemPlus(item.ID));
+    setIsLoading(false);
   };
 
   const onMinus = () => {
     setIsLoading(true);
-    setTimeout(() => {
-      dispatch(onItemMinus(item.ID));
-      setIsLoading(false);
-    }, 200);
+
+    dispatch(onItemMinus(item.ID));
+    setIsLoading(false);
   };
 
   const onRemove = () => {
     setIsLoading(true);
-    setTimeout(() => {
-      dispatch(onItemRemove(item.ID));
-      setIsLoading(false);
-    }, 200);
+
+    dispatch(onItemRemove(item.ID));
+    setIsLoading(false);
   };
 
-  const SaveCart = () => {
-    // ks.SaveCart({
-    //  userid:user.ID,
-    //  notes:'',
-    //  pID:item.ID,
-    //  qty:quantity,
-    //  UnitPrice:item.Price,
-    // }).then((data)=>{
-    //  if(data.success){
-    //    Alert.alert('', Languages.IsDone , [{text: Languages.OK}]);
-    //    CheckCartProduct()
-    //  }else{
-    //    alert("Erorr")
-    //  }
-    // })
+  const SaveCart = qnt => {
+    qnt == 0 || qnt == '' ? setQuantity(1) : '';
+    ks.SaveCart({
+      userid: user.ID,
+      notes: '',
+      pID: item.ID,
+      qty: qnt,
+      UnitPrice: item.Price,
+    }).then(data => {
+      console.log(data);
+      if (data.success) {
+        //   Alert.alert('', Languages.IsDone, [{text: Languages.OK}]);
+        props.getCart();
+
+        // CheckCartProduct();
+      } else {
+        alert('Erorr');
+      }
+    });
   };
+
+  // const CheckCartProduct = () => {
+  //   ks.CheckCartProduct({
+  //     userid: user.ID,
+  //     pID: item.ID,
+  //   }).then(date => {
+  //     if (date.success) {
+  //       if (date.Check) {
+  //         setIsShow(date.Check);
+  //       }
+  //     } else {
+  //       setIsShow(false);
+  //     }
+  //   });
+  // };
   const noteModal = () => {
     return (
       <Modal
@@ -232,17 +248,17 @@ const CartItemCard = (props: any) => {
               <Text style={styles.body}>
                 {Languages.SingleItemPrice.replace(
                   '*',
-                  item?.Price?.toFixed(2) + '$',
+                  item?.Price?.toFixed(2) + Languages.symbolPrice,
                 )}
               </Text>
               <Text style={{...styles.body, color: 'green'}}>
                 {Languages.SingleItemTotalPrice.replace(
                   '*',
-                  (item.Price * item.Quantity)?.toFixed(2) + '$',
+                  (item.Price * quantity)?.toFixed(2) + Languages.symbolPrice,
                 )}
               </Text>
               <Text style={{...styles.body, color: 'green'}}>
-                {Languages.Quantity.replace('*', item.Quantity)}
+                {Languages.Quantity.replace('*', quantity)}
               </Text>
             </View>
           ) : (
@@ -282,19 +298,21 @@ const CartItemCard = (props: any) => {
             justifyContent: 'space-between',
             marginVertical: 10,
           }}>
-          <TouchableOpacity onPress={() => notePopup.current.open()}>
-            <AppIcon
-              type={'MaterialCommunityIcons'}
-              name={'file-document-edit-outline'}
-              size={26}
-              color={AppColors.clickableText}
-              style={{
-                backgroundColor: '#eee',
-                padding: 5,
-                borderRadius: 10,
-              }}
-            />
-          </TouchableOpacity>
+          {false && (
+            <TouchableOpacity onPress={() => notePopup.current.open()}>
+              <AppIcon
+                type={'MaterialCommunityIcons'}
+                name={'file-document-edit-outline'}
+                size={26}
+                color={AppColors.clickableText}
+                style={{
+                  backgroundColor: '#eee',
+                  padding: 5,
+                  borderRadius: 10,
+                }}
+              />
+            </TouchableOpacity>
+          )}
           {false && (
             <QuantityButtons
               value={item.Quantity}
@@ -314,13 +332,13 @@ const CartItemCard = (props: any) => {
             }}>
             <TouchableOpacity
               onPress={() => {
-                if (item.Quantity > 0) {
-                  if (parseInt(quantity) < parseInt(item.Quantity)) {
-                    //  if (quantity < item.MaxQuantity) {
+                if (parseInt(quantity) > 0) {
+                  // if (parseInt(quantity) < parseInt(item.Quantity)) {
+                  //  if (quantity < item.MaxQuantity) {
 
-                    setQuantity(quantity + 1);
-                    SaveCart();
-                  }
+                  setQuantity(parseInt(quantity) + 1);
+                  SaveCart(quantity + 1);
+                  // }
                 } else {
                   setQuantity(1);
                   Alert.alert('', Languages.NoAvailableQuantity, [
@@ -357,29 +375,29 @@ const CartItemCard = (props: any) => {
                     value={quantity.toString()}
                     placeholder={quantity.toString()}
                     onChangeText={txt => {
-                      if (item.MaxQuantity > 0) {
-                        if (parseInt(quantity) < parseInt(item.Quantity)) {
-                          setQuantity(parseInt(txt));
+                      // if (item.MaxQuantity > 0) {
+                      // if (parseInt(quantity) < parseInt(item.Quantity)) {
+                      setQuantity(txt);
+                      setTimeout(() => SaveCart(txt.toString()), 1000);
 
-                          SaveCart();
-                          // dispatch(
-                          //   addToCart({
+                      // dispatch(
+                      //   addToCart({
 
-                          //     item: {...item, quantity: quantity, ShowPrice},
-                          //   }),
-                          // );
-                        } else {
-                          setQuantity(1);
-                          Alert.alert('', Languages.NoAvailableQuantity, [
-                            {text: Languages.OK},
-                          ]);
-                        }
-                      } else {
-                        setQuantity(1);
-                        Alert.alert('', Languages.NoAvailableQuantity, [
-                          {text: Languages.OK},
-                        ]);
-                      }
+                      //     item: {...item, quantity: quantity, ShowPrice},
+                      //   }),
+                      // );
+                      // } else {
+                      //   setQuantity(1);
+                      //   Alert.alert('', Languages.NoAvailableQuantity, [
+                      //     {text: Languages.OK},
+                      //   ]);
+                      // }
+                      // } else {
+                      //   setQuantity(1);
+                      //   Alert.alert('', Languages.NoAvailableQuantity, [
+                      //     {text: Languages.OK},
+                      //   ]);
+                      // }
                     }}
                     numberOfLines={1}
                     maxLength={3}
@@ -400,7 +418,7 @@ const CartItemCard = (props: any) => {
                 if (item.Quantity) {
                   if (quantity > 1) {
                     setQuantity(quantity - 1);
-                    SaveCart();
+                    SaveCart(quantity - 1);
                   }
                 } else {
                   setQuantity(1);
