@@ -10,9 +10,10 @@ import {
   I18nManager,
   Alert,
   StatusBar,
+  Pressable,
 } from 'react-native';
 import {useSelector} from 'react-redux';
-import {Languages} from '../../common';
+import {AppIcon, Languages} from '../../common';
 import {MaterialColors, AppColors} from '../../theme';
 import ks from '../../services/KSAPI';
 import FastImage from 'react-native-fast-image';
@@ -104,14 +105,21 @@ const SearchScreen = (props: any) => {
           onChangeText={(text: string) => {
             setdataSearch([]);
             setSearchText(text);
-            if (searchText.length > 2) {
+            if (text.length > 2) {
               Dosearch(text);
             } else {
-              setdataSearch([]);
+              // setdataSearch([]);
             }
           }}
           containerExtraStyle={{width: '80%'}}
         />
+        {searchText.length > 2 && (
+          <Pressable
+            onPress={() => Dosearch()}
+            style={{position: 'absolute', end: 50, top: 30}}>
+            <AppIcon name="search1" type="AntDesign" size={25} />
+          </Pressable>
+        )}
       </View>
     );
   };
