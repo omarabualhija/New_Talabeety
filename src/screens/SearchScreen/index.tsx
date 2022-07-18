@@ -49,6 +49,7 @@ const SearchScreen = (props: any) => {
         PageNum: 1,
       })
         .then((data: any) => {
+          console.log(data);
           if (data.Success) {
             setdataSearch(data.Products);
             setLoading(false);

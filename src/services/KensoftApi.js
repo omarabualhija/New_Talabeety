@@ -158,6 +158,7 @@ KensoftApi.prototype.CheckCartProduct = function (data, callback) {
 KensoftApi.prototype.DrugStoreProductsFilter = function (data, callback) {
   var requestUrl = this.url + `services/DrugStoreProductGet?`;
   requestUrl += this.join(data, '&');
+  console.log(' oooooooooo', requestUrl);
   return this._request(requestUrl).then(function (data) {
     return data;
   });

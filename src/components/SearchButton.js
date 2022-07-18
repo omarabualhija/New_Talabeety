@@ -130,11 +130,11 @@ const SearchButton = props => {
     setLoading(false);
     console.log(_data);
     if (_data && _data.Success === 1) {
-      console.log('data');
+      console.log('data', _data.Product.Name);
       if (_data.Product.ID) {
         props.navigation.navigate('SearchScreen', {
           fromScanner: true,
-          name: _data.Product.ScientificName,
+          name: _data.Product.Name,
         });
         // props.navigation.navigate('ItemDetailsScreen', {
         //   item: _data.Product,
